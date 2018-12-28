@@ -1,0 +1,73 @@
+# coding=UTF-8
+import urllib.request
+import time
+import datetime
+import re
+import pymysql
+from bs4 import BeautifulSoup
+import logging as log
+import os
+import queue
+import threading
+import time
+
+exitFlag = 0
+
+
+class myThread(threading.Thread):
+    def __init__(self, threadID, name, q):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.q = q
+
+    def run(self):
+        print("Starting " + self.name)
+        process_data(self.name, self.q)
+        print("Exiting " + self.name)
+
+
+def process_data(threadName, q):
+    while not exitFlag:
+        queueLock.acquire()
+        if not workQueue.empty():
+            data = q.get()
+            queueLock.release()
+            print("%s processing %s" % (threadName, data))
+        else:
+            queueLock.release()
+        # time.sleep(1)
+
+symbols = ['000008.SZ','000019.SZ','000022.SZ','000029.SZ','000031.SZ','000034.SZ','000035.SZ','000038.SZ','000046.SZ','000056.SZ','000063.SZ','000156.SZ','000415.SZ','000506.SZ','000516.SZ','000523.SZ','000533.SZ','000534.SZ','000540.SZ','000547.SZ','000564.SZ','000566.SZ','000584.SZ','000590.SZ','000593.SZ','000606.SZ','000616.SZ','000666.SZ','000688.SZ','000703.SZ','000711.SZ','000723.SZ','000757.SZ','000766.SZ','000779.SZ','000793.SZ','000796.SZ','000812.SZ','000825.SZ','000826.SZ','000890.SZ','000900.SZ','000930.SZ','000939.SZ','000962.SZ','000971.SZ','002002.SZ','002005.SZ','002018.SZ','002032.SZ','002034.SZ','002047.SZ','002051.SZ','002059.SZ','002072.SZ','002075.SZ','002082.SZ','002085.SZ','002098.SZ','002103.SZ','002110.SZ','002113.SZ','002121.SZ','002122.SZ','002128.SZ','002143.SZ','002147.SZ','002161.SZ','002163.SZ','002168.SZ','002198.SZ','002210.SZ','002212.SZ','002213.SZ','002219.SZ','002225.SZ','002239.SZ','002248.SZ','002252.SZ','002256.SZ','002259.SZ','002260.SZ','002301.SZ','002309.SZ','002345.SZ','002357.SZ','002366.SZ','002382.SZ','002384.SZ','002413.SZ','002418.SZ','002423.SZ','002431.SZ','002437.SZ','002447.SZ','002450.SZ','002451.SZ','002464.SZ','002480.SZ','002490.SZ','002507.SZ','002509.SZ','002513.SZ','002515.SZ','002520.SZ','002524.SZ','002532.SZ','002545.SZ','002560.SZ','002575.SZ','002578.SZ','002580.SZ','002584.SZ','002592.SZ','002601.SZ','002607.SZ','002619.SZ','002622.SZ','002647.SZ','002650.SZ','002656.SZ','002661.SZ','002662.SZ','002692.SZ','002699.SZ','002721.SZ','002726.SZ','002729.SZ','002739.SZ','002765.SZ','002770.SZ','002775.SZ','002799.SZ','002851.SZ','002857.SZ','002864.SZ','002866.SZ','002872.SZ','002888.SZ','300004.SZ','300016.SZ','300032.SZ','300038.SZ','300049.SZ','300056.SZ','300067.SZ','300071.SZ','300072.SZ','300080.SZ','300086.SZ','300089.SZ','300090.SZ','300100.SZ','300103.SZ','300116.SZ','300128.SZ','300146.SZ','300173.SZ','300187.SZ','300198.SZ','300225.SZ','300229.SZ','300238.SZ','300240.SZ','300266.SZ','300279.SZ','300280.SZ','300290.SZ','300294.SZ','300312.SZ','300317.SZ','300325.SZ','300337.SZ','300341.SZ','300348.SZ','300392.SZ','300409.SZ','300410.SZ','300411.SZ','300414.SZ','300423.SZ','300441.SZ','300444.SZ','300455.SZ','300462.SZ','300464.SZ','300482.SZ','300487.SZ','300491.SZ','300500.SZ','300578.SZ','300586.SZ','300598.SZ','300624.SZ','300647.SZ','300656.SZ','300659.SZ','300662.SZ','300667.SZ','600010.SH','600022.SH','600051.SH','600052.SH','600064.SH','600069.SH','600076.SH','600084.SH','600086.SH','600121.SH','600127.SH','600133.SH','600148.SH','600157.SH','600158.SH','600165.SH','600167.SH','600189.SH','600217.SH','600221.SH','600226.SH','600241.SH','600255.SH','600256.SH','600257.SH','600273.SH','600283.SH','600290.SH','600306.SH','600309.SH','600310.SH','600318.SH','600335.SH','600393.SH','600399.SH','600403.SH','600485.SH','600490.SH','600512.SH','600515.SH','600532.SH','600539.SH','600540.SH','600546.SH','600568.SH','600572.SH','600614.SH','600641.SH','600651.SH','600666.SH','600682.SH','600689.SH','600701.SH','600711.SH','600727.SH','600729.SH','600734.SH','600735.SH','600745.SH','600751.SH','600753.SH','600759.SH','600764.SH','600777.SH','600784.SH','600794.SH','600798.SH','600807.SH','600856.SH','600860.SH','600866.SH','600880.SH','600960.SH','600987.SH','601020.SH','601127.SH','601216.SH','601619.SH','601828.SH','603021.SH','603032.SH','603033.SH','603066.SH','603067.SH','603080.SH','603108.SH','603222.SH','603306.SH','603309.SH','603315.SH','603318.SH','603336.SH','603383.SH','603393.SH','603398.SH','603508.SH','603520.SH','603538.SH','603602.SH','603603.SH','603659.SH','603667.SH','603690.SH','603696.SH','603712.SH','603718.SH','603722.SH','603803.SH','603822.SH','603825.SH','603843.SH','603880.SH','603887.SH','603939.SH','603955.SH','603978.SH','603998.SH']
+
+threadList = symbols
+nameList = symbols
+queueLock = threading.Lock()
+workQueue = queue.Queue(10)
+threads = []
+threadID = 1
+
+# 创建新线程
+for tName in threadList:
+    thread = myThread(threadID, tName, workQueue)
+    thread.start()
+    threads.append(thread)
+    threadID += 1
+
+# 填充队列
+queueLock.acquire()
+for word in nameList:
+    workQueue.put(word)
+queueLock.release()
+
+# 等待队列清空
+while not workQueue.empty():
+    pass
+
+# 通知线程是时候退出
+exitFlag = 1
+
+# 等待所有线程完成
+for t in threads:
+    t.join()
+print("Exiting Main Thread")
