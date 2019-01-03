@@ -3,13 +3,28 @@ from __future__ import print_function, absolute_import, unicode_literals
 from gm.api import *
 from datetime import timedelta, datetime as dt
 import pandas as pd
-from ConnectDB import get_all_data
+from ConnectDB import get_all_data,fill_data
 import arrow
 import numpy as np
 from math import log as lg, exp
+from datetime import timedelta, datetime
+import talib as ta
+from STK.tsdata import get_k_stk as get_k
 
 # 设置token
 set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
+symbol_list = ['SHSE.000300','SZSE.000002']
+start = '2017-01-01'
+end = '2017-03-12'
+df_k = get_k(symbol_list[1], 60, 0, start, end)
+df_idx = get_k(symbol_list[0], 60, 0, start, end)
+df_idx['ma'] = df_idx.close.rolling(window = 80, min_periods = 0, ).mean()
+df_idx['cvv'] = df_idx.close < df_idx.ma
+df_idx = df_idx.drop(columns = ['open','high','low','close','ma'])
+df_k = df_k.set_index('datetime').join(df_idx.set_index('datetime'),how='inner').reset_index('datetime')
+
+
+print(df_k)
 
 # def get_all_gm(symbol, s_time):
 #     df = pd.DataFrame()
@@ -202,3 +217,4 @@ set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
 #     roe_ln[k] = exp(min_roe/set_roe[k])
 #     roe_std_to_pb_ln[k] = exp(roe_std_to_pb[k]/max_std2pb)
 #     std_to_roe_ln[k] = exp(std_to_roe[k]/max_std2roe)
+

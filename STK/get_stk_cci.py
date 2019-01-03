@@ -292,8 +292,8 @@ def ta_atr(n, k_data):
     return(atr.round(3))
 
 
-s_time = '2014-01-01'
-e_time = '2017-12-31'
+s_time = '2015-01-01'
+e_time = '2018-12-31'
 total_return = []
 return_m = []
 symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
@@ -301,9 +301,9 @@ symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600
 # symbol_list = ['SHSE.603288']
 start_list = []
 
-for n_year in range(0, 5):
+for n_year in range(0, 4):
     start_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * n_year
-    end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1)
+    end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1) + timedelta(days=1)
     start_list.append(start_year.strftime('%Y-%m-%d'))
     start_year = start_year.strftime('%Y-%m-%d')
     end_year = end_year.strftime('%Y-%m-%d')

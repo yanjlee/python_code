@@ -38,7 +38,7 @@ def UpdateInfo(start_time, end_time, symbol_list):
 
 
 def get_time():
-    items = 'max(datetime)'
+    items = 'max(dtime)'
     tables = 'data.td_price_1m'
     condition = ' '
     date_info = get_all_data(items, tables, condition)
@@ -49,6 +49,6 @@ def get_time():
 
 start, end = get_time()
 # symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600508','SHSE.600660','SHSE.603288']
-symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.510880','SZSE.159901','SZSE.159915','SHSE.510500','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050']
+symbol_list = ['SHSE.000001','SHSE.000016','SHSE.000300','SZSE.399001','SZSE.399905','SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.510880','SZSE.159901','SZSE.159915','SHSE.510500','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050']
 
 UpdateInfo(start, end,symbol_list)
