@@ -292,13 +292,13 @@ def ta_atr(n, k_data):
     return(atr.round(3))
 
 
-s_time = '2015-01-01'
+s_time = '2018-01-01'
 e_time = '2018-12-31'
 total_return = []
 return_m = []
-symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
+# symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-# symbol_list = ['SHSE.603288']
+symbol_list = ['SHSE.603288']
 start_list = []
 
 for n_year in range(0, 4):
@@ -315,35 +315,37 @@ for n_year in range(0, 4):
     # 查询历史行情
     #     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
         df_k = get_k(sym, 60, 0, start_year, end_year)
-        if len(df_k) == 0:
-            continue
-        cci_n= [15, 30, 60]
-        cci_m = pd.DataFrame()
-        for n in cci_n:
-            cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
+        print(df_k)
 
-        k_data =  pd.concat([df_k, ta_atr(30,df_k), cci_m], axis=1)
-        k_data.rename(columns={'eob':'datetime'}, inplace = True)
-        k_data = k_data.dropna()
-        # DrawSignals(k_data)
-
-        re, mdd, df_r = Run(cci_n, k_data)
-        # k_data = k_data.set_index('datetime')
-        # k_data = pd.concat([k_data,df_r], axis=1)
-        # k_data = k_data.reset_index('datetime')
-        # DrawSignals2(k_data)
-        print([sym, start_year, end_year, re, mdd])
-        # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
-        total_return.append([sym, start_year, end_year, re, mdd])
-
-ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
-
-
-filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
-# t_r=pd.DataFrame(list(return_m))
-# t_r.to_csv(filename)
-t_s=pd.DataFrame(list(total_return))
-t_s.to_csv('R'+filename)
+#         if len(df_k) == 0:
+#             continue
+#         cci_n= [15, 30, 60]
+#         cci_m = pd.DataFrame()
+#         for n in cci_n:
+#             cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
+#
+#         k_data =  pd.concat([df_k, ta_atr(30,df_k), cci_m], axis=1)
+#         k_data.rename(columns={'eob':'datetime'}, inplace = True)
+#         k_data = k_data.dropna()
+#         # DrawSignals(k_data)
+#
+#         re, mdd, df_r = Run(cci_n, k_data)
+#         # k_data = k_data.set_index('datetime')
+#         # k_data = pd.concat([k_data,df_r], axis=1)
+#         # k_data = k_data.reset_index('datetime')
+#         # DrawSignals2(k_data)
+#         print([sym, start_year, end_year, re, mdd])
+#         # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
+#         total_return.append([sym, start_year, end_year, re, mdd])
+#
+# ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
+#
+#
+# filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
+# # t_r=pd.DataFrame(list(return_m))
+# # t_r.to_csv(filename)
+# t_s=pd.DataFrame(list(total_return))
+# t_s.to_csv('R'+filename)
 
 # statMatrx = pd.DataFrame()
 # for sy in symbol_list:

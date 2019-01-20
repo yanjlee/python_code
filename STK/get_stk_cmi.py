@@ -12,7 +12,7 @@ from STK.tsdata import get_k_stk as get_k
 # 设置token
 set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
 
-def Run(cci_n, k_data):
+def Run(k_data):
     #实参数据定义##########################
     FEE = 0
     units = 2000
@@ -70,10 +70,6 @@ def Run(cci_n, k_data):
     buy_price = 0
     b_day = 0
 
-    cci_col = []
-    for c in cci_n:
-        cci_col.append('cci' + str(c))
-    pre_cci_list = list(df[cci_col].iloc[0])
 
     for i, row in enumerate(df.iterrows()):
         datetime = row[1].datetime
@@ -187,27 +183,27 @@ def DrawSignals(k_data):
     ax = fig.add_axes(rect1, facecolor=axescolor)  # left, bottom, width, height
     ax3 = fig.add_axes(rect3, facecolor=axescolor, sharex=ax)
     ax2 = fig.add_axes(rect2, facecolor=axescolor, sharex=ax)
-    ax2t = ax2.twinx() ## 右侧镜像纵坐标
+    # ax2t = ax2.twinx() ## 右侧镜像纵坐标
 
-    ax3.plot(date_strings, k_data['ii'], color='red', label='II%')
-    ax3.plot(date_strings, k_data['ad%'], color='green', label='AD%')
-    ax3.plot(date_strings, k_data['mfi'] / 100 - 0.5, color='blue', label='MFI')
-    ax3.axhline(0, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
-    ax3.axhline(0.15, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    ax3.plot(date_strings, k_data['cmi'], color='red', label='CMI')
+    ax3.plot(date_strings, k_data['cmi_ma'], color='green', label='CMI_MA')
+    # ax3.plot(date_strings, k_data['mfi'] / 100 - 0.5, color='blue', label='MFI')
+    ax3.axhline(20, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    # ax3.axhline(0.15, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
     ax3.legend(loc='upper left', frameon=False)
 
     ax2.set_xticklabels(date_strings[::stick_freq], rotation=30, ha='right') ## 定义横坐标格式
-    ax2.plot(date_strings, k_data['bp'] * 100, color='red', label='bp%')
-    # ax2.plot(date_strings, k_data['mfi'], color='blue', label='mfi')
+    # ax2.plot(date_strings, k_data['bp'] * 100, color='red', label='bp%')
+    ax2.plot(date_strings, k_data['std'], color='blue', label='std')
     # ax2.plot(date_strings, k_data['cci'], color='blue', label='cci')
     ax2.legend(loc='upper left', frameon=False)
 
-    ax2t.set_ylim(float(min(k_data.cci)), float(max(k_data.cci)))
-    ax2t.plot(date_strings, k_data['cci'], color='green', label='cci')
-    ax2t.legend(loc='upper right', frameon=False)
-    ax2t.axhline(100, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
-    ax2t.axhline(0, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
-    ax2t.axhline(-100, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    # ax2t.set_ylim(float(min(k_data.cci)), float(max(k_data.cci)))
+    # ax2t.plot(date_strings, k_data['cci'], color='green', label='cci')
+    # ax2t.legend(loc='upper right', frameon=False)
+    # ax2t.axhline(100, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    # ax2t.axhline(0, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    # ax2t.axhline(-100, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
 
     # Plot candlestick chart
     candlestick_ohlc(ax, ohlc_data_arr2, width=0.6, colorup='r', colordown='g') ## K线图绘制
@@ -218,8 +214,9 @@ def DrawSignals(k_data):
     ax.set_xlim(ndays.min(), ndays.max())
 
     ax.plot(date_strings, k_data['ma'], color='m', label='MA')
-    ax.plot(date_strings, k_data['up'], color='blue', label='Bolling_up')
-    ax.plot(date_strings, k_data['down'], color='brown', label='Bolling_down')
+    ax.plot(date_strings, k_data['b_up'], color='blue', label='Bolling_up')
+    ax.plot(date_strings, k_data['b_down'], color='brown', label='Bolling_down')
+    ax.plot(date_strings, k_data['kod'], color='olive', label='KOD')
     # ax.plot(date_strings, k_data['sar'], marker = '*',color='olive', label='SAR', lw=0.5)
     ax.legend(loc='upper left', frameon=False)
 
@@ -297,25 +294,30 @@ def ta_atr(n, k_data):
     atr['atr'] = ta.ATR(k_data.high, k_data.low, k_data.close, timeperiod=n)
     return(atr.round(3))
 
-
-s_time = '2015-01-01'
-e_time = '2018-12-31'
+cmi_n = 30
+cmi_m = 5
+cmi_trend = 20
+cmi_choppy = 20
+atr_n = 10
+bolling_n = 30
+s_time = '2017-01-01'
+e_time = '2017-05-31'
 total_return = []
 return_m = []
-symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
+# symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-# symbol_list = ['SHSE.603288']
+symbol_list = ['SZSE.000333']
 start_list = []
 
-for n_year in range(0, 4):
-    start_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * n_year
-    end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1) + timedelta(days=1)
-    start_list.append(start_year.strftime('%Y-%m-%d'))
-    start_year = start_year.strftime('%Y-%m-%d')
-    end_year = end_year.strftime('%Y-%m-%d')
+for n_year in range(0, 1):
+    # start_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * n_year
+    # end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1) + timedelta(days=1)
+    # start_list.append(start_year.strftime('%Y-%m-%d'))
+    # start_year = start_year.strftime('%Y-%m-%d')
+    # end_year = end_year.strftime('%Y-%m-%d')
 
-    # start_year = s_time
-    # end_year = e_time
+    start_year = s_time
+    end_year = e_time
 
     for sym in symbol_list:
     # 查询历史行情
@@ -323,39 +325,38 @@ for n_year in range(0, 4):
         df_k = get_k(sym, 60, 0, start_year, end_year)
         if len(df_k) == 0:
             continue
-        df_idx = get_k('SHSE.000300', 60, 0, start_year, end_year)
-        df_idx['ma'] = df_idx.close.rolling(window=10, min_periods=0, ).mean()
-        df_idx['cvv'] = df_idx.close < df_idx.ma
-        df_idx = df_idx.drop(columns=['open', 'high', 'low', 'close', 'ma'])
-        df_k = df_k.set_index('datetime').join(df_idx.set_index('datetime'), how='inner').reset_index('datetime')
+        print(df_k)
+        df_k['cmi'] = abs(df_k.close - df_k.close.shift(cmi_n-1)) * 100 / (df_k.high.rolling(cmi_n).max() - df_k.low.rolling(cmi_n).min())
+        df_k['cmi_ma'] = df_k.cmi.rolling(cmi_m,min_periods=0).mean()
+        df_k['kod'] = (df_k.high + df_k.low + df_k.close) / 3
+        df_k['atr'] = ta.ATR(df_k.high, df_k.low, df_k.close, timeperiod=atr_n)
+        df_k['ma'] = df_k.close.rolling(bolling_n,min_periods=0).mean()
+        df_k['std'] = df_k.close.rolling(bolling_n, min_periods=0).std()
+        df_k['b_up'] = df_k.ma + 2.0 * df_k['std']
+        df_k['b_down'] = df_k.ma - 2.0 * df_k['std']
+        df_k['h3_avg'] = df_k.high.rolling(3, min_periods=0).mean()
+        df_k['l3_avg'] = df_k.low.rolling(3, min_periods=0).mean()
+        df_k = df_k.dropna()
 
-        cci_n= [15, 30, 60]
-        cci_m = pd.DataFrame()
-        for n in cci_n:
-            cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
+        # DrawSignals(df_k)
 
-        k_data =  pd.concat([df_k, ta_atr(30,df_k), cci_m], axis=1)
-        k_data.rename(columns={'eob':'datetime'}, inplace = True)
-        k_data = k_data.dropna()
-        # DrawSignals(k_data)
-
-        re, mdd, df_r = Run(cci_n, k_data)
-        # k_data = k_data.set_index('datetime')
-        # k_data = pd.concat([k_data,df_r], axis=1)
-        # k_data = k_data.reset_index('datetime')
-        # DrawSignals2(k_data)
+        re, mdd, df_r = Run(df_k)
+        # # k_data = k_data.set_index('datetime')
+        # # k_data = pd.concat([k_data,df_r], axis=1)
+        # # k_data = k_data.reset_index('datetime')
+        # # DrawSignals2(k_data)
         print([sym, start_year, end_year, re, mdd])
-        # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
+        # # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
         total_return.append([sym, start_year, end_year, re, mdd])
 
-ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
+# ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
 
 
-filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
-# t_r=pd.DataFrame(list(return_m))
-# t_r.to_csv(filename)
-t_s=pd.DataFrame(list(total_return))
-t_s.to_csv('R'+filename)
+# filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
+# # t_r=pd.DataFrame(list(return_m))
+# # t_r.to_csv(filename)
+# t_s=pd.DataFrame(list(total_return))
+# t_s.to_csv('R'+filename)
 
 # statMatrx = pd.DataFrame()
 # for sy in symbol_list:

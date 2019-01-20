@@ -15,6 +15,19 @@ pro = ts.pro_api()
 
 
 def update_stk_adj_factor():
+    current_data = get_instruments(exchanges=['SHSE', 'SZSE'], sec_types=[1], fields='symbol,trade_date,adj_factor',df=False)
+    for i in current_data:
+        symbol = i['symbol']
+        if symbol.startswith('SHSE'):
+            symbol = symbol.replace('SHSE.', '') + '.SH'
+        else:
+            symbol = symbol.replace('SZSE.', '') + '.SZ'
+        insert_cd = 'insert into data.stk_adj_factor values(\'' + symbol + '\',\'' + i['trade_date'].strftime('%Y-%m-%d') + '\',' + str(round(i['adj_factor'],6)) + ');'
+        try:
+            fill_data(insert_cd)
+        except Exception as e:
+            print(e)
+
     items = 'symbol, max(date)'
     tables = 'stk_adj_factor'
     condition = ' group by symbol order by symbol'
@@ -22,19 +35,32 @@ def update_stk_adj_factor():
     stk_data = dict(data_info)
     end_date = datetime.now().date().strftime('%Y%m%d')
 
-    for i in stk_data:
-        start_date = (stk_data[i] + timedelta(1)).strftime('%Y%m%d')
+    for j in stk_data:
+        start_date = (stk_data[j] + timedelta(1)).strftime('%Y%m%d')
         if start_date > end_date:
             continue
-        df = pro.adj_factor(ts_code=i, start_date=start_date, end_date=end_date)  # trade_date='2018-08-10')
-        for s in range(0, len(df)):
-            insert_sql = 'insert into data.stk_adj_factor values(' + str(list(df.iloc[s])).replace('[','').replace(']','') + ');'
-            # print(insert_sql)
+        if j.startswith('6'):
+            sym = 'SHSE.' + j.replace('.SH', '')
+        else:
+            sym = 'SZSE.' + j.replace('.SZ', '')
+        gm_data = get_history_instruments(symbols=[sym], fields='symbol,trade_date,adj_factor', start_date=start_date,end_date=end_date, df=True)
+        if len(gm_data)  == 0:
+            continue
+        for k in range(0, len(gm_data)):
+            insert_gm = 'insert into data.stk_adj_factor values(\'' + j + '\',\'' + gm_data['trade_date'][k].strftime('%Y-%m-%d') + '\',' + str(round(gm_data['adj_factor'][k], 6)) + ');'
             try:
-                fill_data(insert_sql)
+                fill_data(insert_gm)
             except Exception as e:
                 print(e)
-        print(i + ' is inserted in stk_adj_factor. ')
+        # df = pro.adj_factor(ts_code=i, start_date=start_date, end_date=end_date)  # trade_date='2018-08-10')
+        # for s in range(0, len(df)):
+        #     insert_sql = 'insert into data.stk_adj_factor values(' + str(list(df.iloc[s])).replace('[','').replace(']','') + ');'
+        #     # print(insert_sql)
+        #     try:
+        #         fill_data(insert_sql)
+        #     except Exception as e:
+        #         print(e)
+        print(j + ' is inserted in stk_adj_factor. ')
 
 def update_stk_PEPB():
     end_date = datetime.now().date().strftime('%Y-%m-%d')
@@ -63,7 +89,7 @@ def update_stk_PEPB():
                 except Exception as e:
                     print(e)
                     print(insert_sql)
-        print(sym + ' in updated')
+        print(sym + ' is updated')
 
 
 def fill_ratio_data():

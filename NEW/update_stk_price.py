@@ -311,7 +311,7 @@ def update_stk_price_gm():
             except Exception as e:
                 print(e)
                 print(insert_str)
-    print(symbol + ' : price is updated from GM' )
+        print(symbol + ' : price is updated from GM' )
 ################################
 
 update_stk_price()

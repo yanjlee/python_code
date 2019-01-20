@@ -228,12 +228,12 @@ def ta_atr(n, k_data):
 total_return = []
 # future_list = ['TA','RU1901','M1901','J1901','J1905','RB1901','RB1905','RB1810','ZN1811','ZN1810','CU1811']
 # future_list = ['J1901','RB1901']
-# future_list  = ['CU','J','M','RB','RU','ZN']
+future_list  = ['CU','J','M','RB','RU','ZN']
 
-future_list = ['ZN1901']
+# future_list = ['ZN1901']
 future_units, future_deposit, futur_endtime = get_units(future_list)
-start = '2018-08-04 09:00:00'
-end = '2018-11-27 15:01:00'
+start = '2018-09-04 09:00:00'
+end = '2019-01-14 15:01:00'
 
 
 for i in future_list:

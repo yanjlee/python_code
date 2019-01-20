@@ -4,7 +4,8 @@ import time
 import ts_data as td
 
 
-symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288']
+symbol_list_all = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288']
+symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318']
 frequency_1m = '60s'
 frequency_1h = '3600s'
 count = 1
@@ -57,9 +58,9 @@ while current_time >= '09:30:00' and current_time <= '15:01:00':
 while current_time > '15:01:00': # 收盘, 判断非交易时间则休眠并循环
     start = dt.now().strftime('%Y-%m-%d ') + '09:29:00'
     end = dt.now().strftime('%Y-%m-%d ') + '15:01:00'
-    td.update_gm_history(frequency_1m,'ts_price_1m',symbol_list,start,end)
-    td.update_gm_history(frequency_1h,'ts_price_1h',symbol_list,start,end)
-    td.update_calc_data(symbol_list)
+    td.update_gm_history(frequency_1m,'ts_price_1m',symbol_list_all,start,end)
+    td.update_gm_history(frequency_1h,'ts_price_1h',symbol_list_all,start,end)
+    td.update_calc_data(symbol_list_all)
     print('****' + current_time + ': 已收市，请关闭自动交易程序，检查今日交易数据与总结分析。')
     time.sleep(3000)
     current_time = dt.now().strftime('%H:%M:%S')

@@ -1,7 +1,6 @@
 # coding=UTF-8
 from __future__ import print_function, absolute_import, unicode_literals
 from gm.api import *
-from datetime import timedelta, datetime as dt
 import pandas as pd
 from ConnectDB import get_all_data,fill_data
 import arrow
@@ -13,19 +12,26 @@ from STK.tsdata import get_k_stk as get_k
 
 # 设置token
 set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
-symbol_list = ['SHSE.000300','SZSE.000002']
-start = '2017-01-01'
-end = '2017-03-12'
-df_k = get_k(symbol_list[1], 60, 0, start, end)
-df_idx = get_k(symbol_list[0], 60, 0, start, end)
-df_idx['ma'] = df_idx.close.rolling(window = 80, min_periods = 0, ).mean()
-df_idx['cvv'] = df_idx.close < df_idx.ma
-df_idx = df_idx.drop(columns = ['open','high','low','close','ma'])
-df_k = df_k.set_index('datetime').join(df_idx.set_index('datetime'),how='inner').reset_index('datetime')
+start = '2019-01-01'
+end='2019-01-04'
 
+i = '000002.SZ'
+if i.startswith('6'):
+    symbol = 'SHSE.' + i.replace('.SH', '')
+else:
+    symbol = 'SZSE.' + i.replace('.SZ', '')
 
-print(df_k)
+gm_data = get_history_instruments(symbols=[symbol],fields='symbol,trade_date,adj_factor',start_date= start,end_date=end,df=True)
+# if len(gm_data)  == 0:
+#     continue
+for i in range(0,len(gm_data)):
+    insert_gm = 'insert into data.stk_adj_factor values(\'' + symbol + '\',\'' + gm_data['trade_date'][i].strftime('%Y-%m-%d') + '\',' + str(round(gm_data['adj_factor'][i], 6)) + ');'
+    print(insert_gm)
 
+# start = '2019-01-01'
+# end='2019-01-04'
+# data = get_history_instruments(symbols=['SHSE.601318'],fields='symbol,trade_date,adj_factor',start_date= start,end_date=end,df=True)
+# print(data)
 # def get_all_gm(symbol, s_time):
 #     df = pd.DataFrame()
 #     n = int((dt.now() - dt.strptime(s_time, '%Y-%m-%d')).days/365.24) + 1

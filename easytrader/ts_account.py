@@ -10,8 +10,7 @@ import os
 
 n = 10
 user = ht.init()
-current_time = dt.now().strftime('%H:%M:%S')
-trade_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660']
+
 
 def get_order():
     for i in range(0,n):
@@ -113,12 +112,15 @@ def update_info():
                 print(update_act_pos)
 
 
+
+current_time = dt.now().strftime('%H:%M:%S')
+trade_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660']
 # htd.get_price(['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.603288'])
-# try:
-#     trade(trade_list, user)
-#     os.system("C:/codes/easytrader/Blackberry.m4a")
-#     time.sleep(60)
-# except Exception as e:
-#     print(e)
+try:
+    trade(trade_list, user)
+    os.system("C:/codes/easytrader/Blackberry.m4a")
+    time.sleep(60)
+except Exception as e:
+    print(e)
 
 update_info()

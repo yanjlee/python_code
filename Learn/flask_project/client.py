@@ -21,5 +21,5 @@ if os.path.exists(fileName):
         print("成功上传:", len(data), "字节")
     else:
         print(msg)
-else:n
+else:
     print("文件不存在!")

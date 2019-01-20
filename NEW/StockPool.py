@@ -195,13 +195,15 @@ def get_info(divSet7):
     df =df.set_index('symbol')
     return (df)
 
-order, divSet7, df = get_stock_list('2018-12-27')
+order, divSet7, df = get_stock_list('2019-01-14')
 
 df_info = get_info(divSet7)
 df = pd.merge(df,df_info,left_index=True,right_index=True)
+print(get_info(order))
 # # # #
 # list_2 = stock_list('2018-07-05')
 # cProfile.run("stock_list('2018-05-04')")
 
 print(order)
 print(df.sort_values(axis = 0,by = 'industry'))
+print(df_info)

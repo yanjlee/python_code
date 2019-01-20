@@ -142,38 +142,7 @@ def update_w_idx_price():
     connClose(conn, cur)
 
 
-def update_idx_price_tec():
-    items = 'symbol, max(date)'
-    table = 'idx_price_tec'
-    condition = ' group by symbol order by symbol'
-    idx_data = get_all_data(items, table, condition)
-    idx_info = dict(idx_data)
-    symbols = list(idx_info.keys())
-
-    for j in symbols:
-        items = 'date, close'
-        table = 'idx_price'
-        condition = ' where symbol = \'' + j + '\' order by date desc limit 120'
-        idx_data = get_all_data(items, table, condition)
-        idx_price = dict(idx_data)
-        df_price = pd.DataFrame(list(idx_price.values()), columns=['close'], index=idx_price.keys())
-        df_price.sort_index(inplace=True)
-
-        ma_list = [5, 10, 20, 30, 60, 120]
-        for ma in ma_list:
-            # df_price['ema' + str(ma)] = pd.ewma(df_price['close'], span=ma)
-            df_price['ma' + str(ma)] = df_price['close'].rolling(window=ma, center=False).mean()
-
-        df_price = df_price.drop(columns=['close'])
-        for h in range(0, len(df_price)):
-            if df_price.index[h] <= idx_info[j]:
-                continue
-            insert_sql = 'insert into data.idx_price_tec values(\'' + j + '\',\'' + df_price.index[h].strftime(
-                '%Y-%m-%d') + '\', ' + str(list(df_price.iloc[h])).replace('[', '').replace(']', ');')
-            fill_data(insert_sql)
-        print(j + ' is inserted in idx_price_tec')
 
 
 update_idx_price()
 update_w_idx_price()
-# update_idx_price_tec()
