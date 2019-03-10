@@ -81,13 +81,28 @@ def get_k_stk(symbol, n, k, start_time, end_time):
     df_k = df_k.drop(columns = ['index'])
     return(df_k)
 
+def get_stk(symbol, start_time, end_time):
+    if symbol.startswith('SHSE'):
+        sym = symbol.replace('SHSE.', '') + '.SH'
+    else:
+        sym = symbol.replace('SZSE.', '') + '.SZ'
+    items = 'date, open, high, low, close'#, volume'
+    table = ' stk_price_forward'
+    condition = 'where symbol = \'' + sym + '\' and date >= \'' + start_time + '\' and date <= \'' + end_time + '\'  order by date asc'
+    symbol_data = get_all_data(items, table, condition)
+    k_data = pd.DataFrame(list(symbol_data), columns=['datetime', 'open', 'high', 'low', 'close'])#, 'volume'])
+    k_data.set_index(["datetime"], inplace=True)
+    k_data = k_data.astype('float64')
+    k_data = k_data.reset_index(["datetime"])
+    return (k_data)
+
 # n = 60
 # k = 0
-# symbol = 'SHSE.511260'
-# start_time = '2015-01-01'
-# end_time = '2015-12-08'
-# # df_k = get_k_stk(symbol, n, k, start_time, end_time)
-# # print(df_k)
+# symbol = 'SHSE.601318'
+# start_time = '2018-01-01'
+# end_time = '2018-12-31'
+# df_k = get_stk(symbol, start_time, end_time)
+# print(df_k)
 #
 # df =  get_k_stk(symbol, 60,0 , start_time, end_time)
 # print(df)

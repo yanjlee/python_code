@@ -114,7 +114,7 @@ def update_info():
 
 
 current_time = dt.now().strftime('%H:%M:%S')
-trade_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660']
+trade_list = ['SZSE.000333','SZSE.002456','SHSE.512880']
 # htd.get_price(['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.603288'])
 try:
     trade(trade_list, user)

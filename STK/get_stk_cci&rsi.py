@@ -383,59 +383,64 @@ def ADII(n, k_data):
     return(adii[['ad%','ii']].round(3))
 
 s_time = '2014-01-01'
-e_time = '2017-12-31'
+e_time = '2019-02-26'
 total_return = []
 return_m = []
 symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-# symbol_list = ['SHSE.603288']
-start_list = []
+# symbol_list = ['SHSE.512880']
+# start_list = []
+years = int(e_time[:4]) - int(s_time[:4]) + 1
 
-for n_year in range(0, 5):
-    start_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * n_year
-    end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1)
-    start_list.append(start_year.strftime('%Y-%m-%d'))
-    start_year = start_year.strftime('%Y-%m-%d')
-    end_year = end_year.strftime('%Y-%m-%d')
+# for n in range(years):
+#     if n == 0:
+#         start_year = s_time
+#         end_year = str(int(s_time[:4]) + n) + '-12-31'
+#     elif n == (years - 1):
+#         start_year = str(int(s_time[:4]) + n) + '-01-01'
+#         end_year = e_time
+#     else:
+#         start_year = str(int(s_time[:4]) + n) + '-01-01'
+#         end_year = str(int(s_time[:4]) + n) + '-12-31'
+#     # start_list.append(start_year)
+start_year = s_time
+end_year = e_time
 
-    # start_year = s_time
-    # end_year = e_time
+for sym in symbol_list:
+# 查询历史行情
+#     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
+    df_k = get_k(sym, 60, 0, start_year, end_year)
+    if len(df_k) == 0:
+        continue
+    cci_n= [15, 30, 60]
+    cci_m = pd.DataFrame()
+    for n in cci_n:
+        cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
 
-    for sym in symbol_list:
-    # 查询历史行情
-    #     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
-        df_k = get_k(sym, 60, 0, start_year, end_year)
-        if len(df_k) == 0:
-            continue
-        cci_n= [15, 30, 60]
-        cci_m = pd.DataFrame()
-        for n in cci_n:
-            cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
+    rsi_n = [9, 13, 14]
+    rsi_m = pd.DataFrame()
+    rsi_m = pd.concat([rsi_m, ta_atr(30,df_k)], axis=1)
+    for f in rsi_n:
+        rsi_m = pd.concat([rsi_m, ta_rsi(f,df_k),ta_rsi(f*2,df_k)], axis=1)
 
-        rsi_n = [9, 13, 14]
-        rsi_m = pd.DataFrame()
-        rsi_m = pd.concat([rsi_m, ta_atr(30,df_k)], axis=1)
-        for f in rsi_n:
-            rsi_m = pd.concat([rsi_m, ta_rsi(f,df_k),ta_rsi(f*2,df_k)], axis=1)
-
-        k_data =  pd.concat([df_k, rsi_m, cci_m], axis=1)
+    k_data =  pd.concat([df_k, rsi_m, cci_m], axis=1)
 
 
-        k_data.rename(columns={'eob':'datetime'}, inplace = True)
-        k_data = k_data.dropna()
+    k_data.rename(columns={'eob':'datetime'}, inplace = True)
+    k_data = k_data.dropna()
 
-        # DrawSignals(k_data)
+    # DrawSignals(k_data)
 
-        re, mdd, df_r = Run(cci_n, rsi_n, k_data)
-        # k_data = k_data.set_index('datetime')
-        # k_data = pd.concat([k_data,df_r], axis=1)
-        # k_data = k_data.reset_index('datetime')
-        # DrawSignals2(k_data)
-        print([sym, start_year, end_year, re, mdd])
-        # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
-        total_return.append([sym, start_year, end_year, re, mdd])
+    re, mdd, df_r = Run(cci_n, rsi_n, k_data)
+    # k_data = k_data.set_index('datetime')
+    # k_data = pd.concat([k_data,df_r], axis=1)
+    # k_data = k_data.reset_index('datetime')
+    # DrawSignals2(k_data)
+    print([sym, start_year, end_year, re, mdd])
+    # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
+    total_return.append([sym, start_year, end_year, re, mdd])
 
-    ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
+ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
 
 
 filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'

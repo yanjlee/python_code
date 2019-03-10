@@ -75,9 +75,9 @@ def Run(k_data):
         datetime = row[1].datetime
         close = row[1].close
         chg = row[1].chg
-        cci_list = list(row[1][cci_col])
+        kod = row[1].kod
+        ma = row[1].ma
         b_day  = max(b_day-1, 0)
-        cvv = row[1].cvv
 
         if i < 1:  # 从第二条开始
             continue
@@ -90,26 +90,9 @@ def Run(k_data):
 
 
     ## 策略信号
-        signal_list =[]
-
-        ## CCI策略
-        for j in range(0, len(cci_n)):
-            pre_cci = pre_cci_list[j]
-            cci = cci_list[j]
-            ci = 400
-            range_value = 50
-            for i in range(-ci, ci + 1, range_value):
-                if pre_cci < i and cci > i:
-                    signal_list.append(1)
-                elif pre_cci > i and cci < i:
-                    signal_list.append(-1)
-                else:
-                    signal_list.append(pre_pos)
-
-        signal_value = sum(signal_list) # 计算产生总信号
-        if signal_value > 0:
+        if kod > ma :
             signal = 1
-        elif signal_value < 0:
+        elif kod < ma:
             signal = 0
         else:
             signal = pre_pos
@@ -123,7 +106,7 @@ def Run(k_data):
 
         if close < (max_price - 2.2 * atr) and signal == 1:
             signal = 0
-        elif b_day != 0 or cvv == True:
+        elif b_day != 0:
             signal = 0
 
         # 百分比止损
@@ -138,7 +121,6 @@ def Run(k_data):
 
         ## 保留前一天close数据
         pre_close = close
-        pre_cci_list = cci_list
 
     # 结果统计与展示
     df_rt = pd.DataFrame()
@@ -185,18 +167,18 @@ def DrawSignals(k_data):
     ax2 = fig.add_axes(rect2, facecolor=axescolor, sharex=ax)
     # ax2t = ax2.twinx() ## 右侧镜像纵坐标
 
-    ax3.plot(date_strings, k_data['cmi'], color='red', label='CMI')
-    ax3.plot(date_strings, k_data['cmi_ma'], color='green', label='CMI_MA')
-    # ax3.plot(date_strings, k_data['mfi'] / 100 - 0.5, color='blue', label='MFI')
-    ax3.axhline(20, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
-    # ax3.axhline(0.15, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
-    ax3.legend(loc='upper left', frameon=False)
-
-    ax2.set_xticklabels(date_strings[::stick_freq], rotation=30, ha='right') ## 定义横坐标格式
-    # ax2.plot(date_strings, k_data['bp'] * 100, color='red', label='bp%')
-    ax2.plot(date_strings, k_data['std'], color='blue', label='std')
-    # ax2.plot(date_strings, k_data['cci'], color='blue', label='cci')
-    ax2.legend(loc='upper left', frameon=False)
+    # ax3.plot(date_strings, k_data['cmi'], color='red', label='CMI')
+    # ax3.plot(date_strings, k_data['cmi_ma'], color='green', label='CMI_MA')
+    # # ax3.plot(date_strings, k_data['mfi'] / 100 - 0.5, color='blue', label='MFI')
+    # ax3.axhline(20, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    # # ax3.axhline(0.15, linestyle='dotted', color='m', lw=1)  ## 画一条水平收益基准线
+    # ax3.legend(loc='upper left', frameon=False)
+    #
+    # ax2.set_xticklabels(date_strings[::stick_freq], rotation=30, ha='right') ## 定义横坐标格式
+    # # ax2.plot(date_strings, k_data['bp'] * 100, color='red', label='bp%')
+    # ax2.plot(date_strings, k_data['std'], color='blue', label='std')
+    # # ax2.plot(date_strings, k_data['cci'], color='blue', label='cci')
+    # ax2.legend(loc='upper left', frameon=False)
 
     # ax2t.set_ylim(float(min(k_data.cci)), float(max(k_data.cci)))
     # ax2t.plot(date_strings, k_data['cci'], color='green', label='cci')
@@ -214,8 +196,9 @@ def DrawSignals(k_data):
     ax.set_xlim(ndays.min(), ndays.max())
 
     ax.plot(date_strings, k_data['ma'], color='m', label='MA')
-    ax.plot(date_strings, k_data['b_up'], color='blue', label='Bolling_up')
-    ax.plot(date_strings, k_data['b_down'], color='brown', label='Bolling_down')
+    ax.plot(date_strings, k_data['ma_20'], label='MA_20')
+    # ax.plot(date_strings, k_data['pn_high'], color='blue', label='pn_high')
+    # ax.plot(date_strings, k_data['pn_low'], color='brown', label='pn_low')
     ax.plot(date_strings, k_data['kod'], color='olive', label='KOD')
     # ax.plot(date_strings, k_data['sar'], marker = '*',color='olive', label='SAR', lw=0.5)
     ax.legend(loc='upper left', frameon=False)
@@ -294,82 +277,68 @@ def ta_atr(n, k_data):
     atr['atr'] = ta.ATR(k_data.high, k_data.low, k_data.close, timeperiod=n)
     return(atr.round(3))
 
-cmi_n = 30
-cmi_m = 5
-cmi_trend = 20
-cmi_choppy = 20
+
+# cmi_n = 30
+# cmi_ma = 5
+# cmi_trend = 20
+# cmi_choppy = 20
 atr_n = 10
-bolling_n = 30
-s_time = '2017-01-01'
-e_time = '2017-05-31'
+n = 20
+s_time = '2015-01-01'
+e_time = '2018-12-31'
 total_return = []
 return_m = []
-# symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
+symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-symbol_list = ['SZSE.000333']
-start_list = []
+# symbol_list = ['SZSE.002456']
+# start_list = []
+years = int(e_time[:4]) - int(s_time[:4]) + 1
+# for n in range(years):
+#     if n == 0:
+#         start_year = s_time
+#         end_year = str(int(s_time[:4]) + n) + '-12-31'
+#     elif n == (years - 1):
+#         start_year = str(int(s_time[:4]) + n) + '-01-01'
+#         end_year = e_time
+#     else:
+#         start_year = str(int(s_time[:4]) + n) + '-01-01'
+#         end_year = str(int(s_time[:4]) + n) + '-12-31'
+#     # start_list.append(start_year)
+start_year = s_time
+end_year = e_time
 
-for n_year in range(0, 1):
-    # start_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * n_year
-    # end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1) + timedelta(days=1)
-    # start_list.append(start_year.strftime('%Y-%m-%d'))
-    # start_year = start_year.strftime('%Y-%m-%d')
-    # end_year = end_year.strftime('%Y-%m-%d')
-
-    start_year = s_time
-    end_year = e_time
-
+for i in ['0.618', 'avg4', 'avg3', 'close']:
     for sym in symbol_list:
     # 查询历史行情
     #     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
         df_k = get_k(sym, 60, 0, start_year, end_year)
         if len(df_k) == 0:
             continue
-        print(df_k)
-        df_k['cmi'] = abs(df_k.close - df_k.close.shift(cmi_n-1)) * 100 / (df_k.high.rolling(cmi_n).max() - df_k.low.rolling(cmi_n).min())
-        df_k['cmi_ma'] = df_k.cmi.rolling(cmi_m,min_periods=0).mean()
-        df_k['kod'] = (df_k.high + df_k.low + df_k.close) / 3
+        # df_k['cmi'] = abs(df_k.close - df_k.close.shift(cmi_n-1)) * 100 / (df_k.high.rolling(cmi_n).max() - df_k.low.rolling(cmi_n).min())
+        # df_k['cmi_ma'] = df_k.cmi.rolling(cmi_ma,min_periods=0).mean()
+        if i == '0.618':
+            df_k['kod'] = (df_k.high + df_k.low) * 0.191 + (df_k.close * 0.618 + df_k.open * 0.382) * 0.618
+        elif i == 'avg4':
+            df_k['kod'] = (df_k.high + df_k.low + df_k.close + df_k.open) / 4
+        elif i == 'avg3':
+            df_k['kod'] = (df_k.high + df_k.low + df_k.close) / 3
+        elif i == 'close':
+            df_k['kod'] = df_k.close
+
         df_k['atr'] = ta.ATR(df_k.high, df_k.low, df_k.close, timeperiod=atr_n)
-        df_k['ma'] = df_k.close.rolling(bolling_n,min_periods=0).mean()
-        df_k['std'] = df_k.close.rolling(bolling_n, min_periods=0).std()
-        df_k['b_up'] = df_k.ma + 2.0 * df_k['std']
-        df_k['b_down'] = df_k.ma - 2.0 * df_k['std']
-        df_k['h3_avg'] = df_k.high.rolling(3, min_periods=0).mean()
-        df_k['l3_avg'] = df_k.low.rolling(3, min_periods=0).mean()
+        df_k['ma'] = df_k.close.rolling(20,min_periods=0).mean()
+
         df_k = df_k.dropna()
 
         # DrawSignals(df_k)
 
         re, mdd, df_r = Run(df_k)
-        # # k_data = k_data.set_index('datetime')
-        # # k_data = pd.concat([k_data,df_r], axis=1)
-        # # k_data = k_data.reset_index('datetime')
-        # # DrawSignals2(k_data)
-        print([sym, start_year, end_year, re, mdd])
-        # # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
-        total_return.append([sym, start_year, end_year, re, mdd])
+        total_return.append([sym, i, re, mdd])
 
 # ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
+# print(ret)
 
+filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
+t_r=pd.DataFrame(list(total_return))
+t_r.to_csv(filename)
 
-# filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
-# # t_r=pd.DataFrame(list(return_m))
-# # t_r.to_csv(filename)
-# t_s=pd.DataFrame(list(total_return))
-# t_s.to_csv('R'+filename)
-
-# statMatrx = pd.DataFrame()
-# for sy in symbol_list:
-#     for st in start_list:
-#         queryStr = 'start==\'' + st + '\'&symbol==\'' + sy + '\''
-#         test = ret.query(queryStr)
-#         test['efc'] = (test['return']-1) / - test.mdd
-#         test2 = test.groupby('f')
-#         test3 =test2.mean()
-#         test3.reset_index('f')
-#         statMatrx=statMatrx.append(test3)
-#
-# statMatrx.to_csv('test_f.csv')
-# test4 = statMatrx.groupby('f')
-# test5 = test4.mean()
-# test5.to_csv('calc_f.csv')

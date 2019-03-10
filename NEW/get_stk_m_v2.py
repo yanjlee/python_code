@@ -374,8 +374,6 @@ for n_year in range(0, 5):
     return_m.append([start_year, end_year, ret['return'].mean(), ret['mdd'].mean(),(ret['return'].mean() - 1) / -ret['mdd'].mean()])
 
 
-
-
 # print(ret['mdd'].mean())
 # print((ret['return'].mean() - 1) / -ret['mdd'].mean())
 filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'

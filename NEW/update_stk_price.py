@@ -301,7 +301,10 @@ def update_stk_price_gm():
         stk_data = pd.concat([stk_data1, stk_data2], axis = 1)
         stk_data['chg_rate'] = (stk_data.close - stk_data.close.shift(1))/stk_data.close.shift(1)
         stk_data = stk_data.dropna()
-        stk_data = stk_data.drop(['pub_date','end_date','symbol'],axis = 1)
+        try:
+            stk_data = stk_data.drop(['pub_date','end_date','symbol'],axis = 1)
+        except Exception as e:
+            pass
         stk_data = stk_data.round(4)
 
         for i in range(0, len(stk_data)):

@@ -51,6 +51,7 @@ def get_gm_data(symbol_list,table, frequency, window):
         history_data = history_n(symbol, frequency, window, end_time=None, fields='symbol,bob,open,high,low,close,volume,amount', skip_suspended=True, fill_missing='Last',
                                  adjust=1, adjust_end_time='', df=True)
         h_data = pd.concat([h_data, history_data],ignore_index=True)
+    # print(h_data)
     insert_td_data(table, h_data)
 
 
@@ -296,15 +297,15 @@ def trade(symbol_list, user):
 
 
 # symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.603288']
-# symbol_list = ['SHSE.600585']
-# start = '2018-09-01 08:54:00'
-# end = '2018-12-20 15:04:01'
-# # frequency = '60s'
-# # table = 'ts_price_1m'
-# frequency = '3600s'
-# table = 'ts_price_1h'
-# update_gm_history(frequency,table,symbol_list,start,end)
-# update_calc_data(symbol_list)
+symbol_list = ['SHSE.000300']
+start = '2018-07-20 08:54:00'
+end = '2019-02-26 15:04:01'
+# frequency = '60s'
+# table = 'ts_price_1m'
+frequency = '3600s'
+table = 'ts_price_1h'
+update_gm_history(frequency,table,symbol_list,start,end)
+update_calc_data(symbol_list)
 
 # trade_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660']
 # trade(trade_list)

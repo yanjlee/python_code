@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 from mpl_finance import candlestick_ohlc
 import pandas as pd
 import numpy as np
-from STK.tsdata import get_k_stk as get_k
+from STK.tsdata import get_k_stk as get_k, get_stk
 
 # 设置token
 set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
 
-def Run(cci_n, k_data):
+def Run(cci_n, dataset):
     #实参数据定义##########################
     FEE = 0
     units = 2000
@@ -30,8 +30,8 @@ def Run(cci_n, k_data):
 
 
     # 获取数据, 创建DataFrame
-    k_data['chg'] = (k_data['close'] - k_data['close'].shift(1))/ k_data['close'].shift(1)
-    df = k_data.dropna()
+
+    df = dataset
 
     # 定义账户类
     class ActStatus:
@@ -68,6 +68,7 @@ def Run(cci_n, k_data):
     pre_close = df.close.iloc[0]
     max_price = 0
     buy_price = 0
+    b_day = 0
 
     cci_col = []
     for c in cci_n:
@@ -78,7 +79,9 @@ def Run(cci_n, k_data):
         datetime = row[1].datetime
         close = row[1].close
         chg = row[1].chg
+        atr = row[1].atr
         cci_list = list(row[1][cci_col])
+        b_day = max(b_day - 1, 0)
 
         if i < 1:  # 从第二条开始
             continue
@@ -121,8 +124,9 @@ def Run(cci_n, k_data):
         else:
             max_price = 0
 
-
         if close < (max_price - 2.2 * atr) and signal == 1:
+            signal = 0
+        elif b_day != 0:
             signal = 0
 
         # 百分比止损
@@ -133,6 +137,7 @@ def Run(cci_n, k_data):
             buy_price = pre_close
         elif pre_pos == 1 and signal == 0:
             buy_price = 0
+            b_day = 3
 
         ## 保留前一天close数据
         pre_close = close
@@ -292,55 +297,61 @@ def ta_atr(n, k_data):
     return(atr.round(3))
 
 
-s_time = '2018-01-01'
-e_time = '2018-12-31'
+s_time = '2018-10-01'
+e_time = '2019-02-26'
 total_return = []
 return_m = []
-# symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
+symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-symbol_list = ['SHSE.603288']
-start_list = []
+# symbol_list = ['SHSE.512880']
+# start_list = []
+years = int(e_time[:4]) - int(s_time[:4]) + 1
 
-for n_year in range(0, 4):
-    start_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * n_year
-    end_year = dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (n_year+1) + timedelta(days=1)
-    start_list.append(start_year.strftime('%Y-%m-%d'))
-    start_year = start_year.strftime('%Y-%m-%d')
-    end_year = end_year.strftime('%Y-%m-%d')
+# for n in range(years):
+#     if n == 0:
+#         start_year = s_time
+#         end_year = str(int(s_time[:4]) + n) + '-12-31'
+#     elif n == (years - 1):
+#         start_year = str(int(s_time[:4]) + n) + '-01-01'
+#         end_year = e_time
+#     else:
+#         start_year = str(int(s_time[:4]) + n) + '-01-01'
+#         end_year = str(int(s_time[:4]) + n) + '-12-31'
+#     # start_list.append(start_year)
+start_year = s_time
+end_year = e_time
 
-    # start_year = s_time
-    # end_year = e_time
+for sym in symbol_list:
+# 查询历史行情
+#     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
+#     df_k = get_stk(sym, start_year, end_year)
+#     cci_n= [5, 13, 21]
+    df_k = get_k(sym, 60, 0, start_year, end_year)
+    cci_n= [15, 30, 60]
+    # cci_n= [20,40,80]
 
-    for sym in symbol_list:
-    # 查询历史行情
-    #     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
-        df_k = get_k(sym, 60, 0, start_year, end_year)
-        print(df_k)
+    if len(df_k) == 0:
+        continue
+    df_k.loc[:, 'chg'] = (df_k['close'] - df_k['close'].shift(1)) / df_k['close'].shift(1)
+    cci_m = pd.DataFrame()
+    for n in cci_n:
+        cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
+    k_data =  pd.concat([df_k, ta_atr(20,df_k), cci_m], axis=1)
+    k_data = k_data.dropna()
+    # DrawSignals(k_data)
 
-#         if len(df_k) == 0:
-#             continue
-#         cci_n= [15, 30, 60]
-#         cci_m = pd.DataFrame()
-#         for n in cci_n:
-#             cci_m = pd.concat([cci_m, ta_cci(n,df_k)], axis=1)
-#
-#         k_data =  pd.concat([df_k, ta_atr(30,df_k), cci_m], axis=1)
-#         k_data.rename(columns={'eob':'datetime'}, inplace = True)
-#         k_data = k_data.dropna()
-#         # DrawSignals(k_data)
-#
-#         re, mdd, df_r = Run(cci_n, k_data)
-#         # k_data = k_data.set_index('datetime')
-#         # k_data = pd.concat([k_data,df_r], axis=1)
-#         # k_data = k_data.reset_index('datetime')
-#         # DrawSignals2(k_data)
-#         print([sym, start_year, end_year, re, mdd])
-#         # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
-#         total_return.append([sym, start_year, end_year, re, mdd])
-#
-# ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
-#
-#
+    re, mdd, df_r = Run(cci_n, k_data)
+    # k_data = k_data.set_index('datetime')
+    # k_data = pd.concat([k_data,df_r], axis=1)
+    # k_data = k_data.reset_index('datetime')
+    # DrawSignals2(k_data)
+    # print([sym, start_year, end_year, re, mdd])
+    # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
+    total_return.append([sym, start_year, end_year, re, mdd])
+
+ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
+print(ret)
+
 # filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
 # # t_r=pd.DataFrame(list(return_m))
 # # t_r.to_csv(filename)

@@ -249,6 +249,8 @@ def get_all_gm(symbol, s_time):
         end_date = max(dt.now().date().strftime('%Y-%m-%d'), (dt.strptime(s_time, '%Y-%m-%d') + timedelta(weeks=52) * (i+1)).strftime('%Y-%m-%d'))
         df_dy = get_fundamentals(table='trading_derivative_indicator', symbols=symbol, start_date=start_date,end_date=end_date, fields='DY', df='True')
         df = pd.concat([df,df_dy], axis=0)
+        if len(df) == 0:
+            continue
         df = df.drop_duplicates()
     return(df)
 
@@ -294,14 +296,14 @@ def update_div_yield(symbol_list, start_date, end_date):
                 print(update_dy)
         print(symbol + ': div_yield is updated.')
 
-download_financial_data()
-load_financial_data()
+# download_financial_data()
+# load_financial_data()
 quartly_date = ['2018-09-30','2018-06-30','2018-03-31','2017-12-31','2017-09-30','2017-06-30','2017-03-31','2016-12-31','2016-09-30','2016-06-30','2016-03-31','2015-12-31','2015-09-30','2015-06-30','2015-03-31','2014-12-31','2014-09-30','2014-06-30','2014-03-31','2013-12-31','2013-09-30','2013-06-30','2013-03-31','2012-12-31','2012-09-30','2012-06-30','2012-03-31','2011-12-31','2011-09-30','2011-06-30','2011-03-31','2010-12-31','2010-09-30','2010-06-30','2010-03-31','2009-12-31']
 # quartly_date = ['2018-09-30','2018-06-30','2018-03-31','2017-12-31','2017-09-30','2017-06-30','2017-03-31','2016-12-31']
 start_date = quartly_date[-1]
 end_date = quartly_date[0]
 symbol_list = get_symbols('stk_finance')
-df = get_df(quartly_date)
-update_eps_roe(symbol_list, df)
-update_roic(symbol_list, df,start_date, end_date)
+# df = get_df(quartly_date)
+# update_eps_roe(symbol_list, df)
+# update_roic(symbol_list, df,start_date, end_date)
 update_div_yield(symbol_list, start_date, dt.now().date().strftime('%Y-%m-%d'))

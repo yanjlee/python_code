@@ -123,23 +123,23 @@ def two_ema(short, long):
 
 # df = pd.concat([df_price,df_trade],axis = 1)
 
-# # 计算OLS，取斜率
-# # results = sm.OLS(y,x).fit()
-# # results.params.item()
-# x_ray = [1,2,3,5,8]
-# margin_list = list(df_price['margin'])
-# ols_beta = []
-# for j in range(0, len(margin_list)-4):
-#     temp = []
-#     for k in range(0,5):
-#         temp.append(margin_list[j+k])
-#     y_ray = temp
-#     ols_result = sm.OLS(y_ray, x_ray).fit()
-#     ols_beta.append(round(ols_result.params.item(),3))
-#
-# beta = [0,0,0,0] + ols_beta
-# df_price['beta'] = pd.DataFrame(beta)
-# df_price['angle'] = np.arctan(df_price['beta'])*180/PI
+# 计算OLS，取斜率
+# results = sm.OLS(y,x).fit()
+# results.params.item()
+x_ray = [1,2,3,5,8]
+margin_list = list(df_price['margin'])
+ols_beta = []
+for j in range(0, len(margin_list)-4):
+    temp = []
+    for k in range(0,5):
+        temp.append(margin_list[j+k])
+    y_ray = temp
+    ols_result = sm.OLS(y_ray, x_ray).fit()
+    ols_beta.append(round(ols_result.params.item(),3))
+
+beta = [0,0,0,0] + ols_beta
+df_price['beta'] = pd.DataFrame(beta)
+df_price['angle'] = np.arctan(df_price['beta'])*180/PI
 
 # filename = datetime.now().strftime('%Y%m%d%H%M%S_') + future_type + '.csv'
 # df.to_csv(filename)
