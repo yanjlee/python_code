@@ -195,7 +195,7 @@ def get_info(divSet7):
     df =df.set_index('symbol')
     return (df)
 
-order, divSet7, df = get_stock_list('2019-02-13')
+order, divSet7, df = get_stock_list('2019-03-08')
 
 df_info = get_info(divSet7)
 df = pd.merge(df,df_info,left_index=True,right_index=True)
