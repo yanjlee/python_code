@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 from mpl_finance import candlestick_ohlc
 import pandas as pd
 import numpy as np
-from STK.tsdata import get_k_stk as get_k, get_stk
+from STK.tsdata import get_k_stk as get_k, get_stk, get_stk_1h
 
 # 设置token
 set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
 
-def Run(cci_n, dataset):
+def Run(sym,cci_n, dataset):
     #实参数据定义##########################
     FEE = 0
     units = 2000
@@ -31,7 +31,7 @@ def Run(cci_n, dataset):
 
     # 获取数据, 创建DataFrame
 
-    df = dataset
+    df = dataset.set_index('datetime')
 
     # 定义账户类
     class ActStatus:
@@ -76,7 +76,7 @@ def Run(cci_n, dataset):
     pre_cci_list = list(df[cci_col].iloc[0])
 
     for i, row in enumerate(df.iterrows()):
-        datetime = row[1].datetime
+        datetime = row[0]
         close = row[1].close
         chg = row[1].chg
         atr = row[1].atr
@@ -100,15 +100,15 @@ def Run(cci_n, dataset):
         for j in range(0, len(cci_n)):
             pre_cci = pre_cci_list[j]
             cci = cci_list[j]
-            ci = 400
+            ci = 101
             range_value = 50
-            for i in range(-ci, ci + 1, range_value):
+            for i in range(-ci, ci + 300, range_value):
                 if pre_cci < i and cci > i:
                     signal_list.append(1)
                 elif pre_cci > i and cci < i:
                     signal_list.append(-1)
                 else:
-                    signal_list.append(pre_pos)
+                    signal_list.append(0)
 
         signal_value = sum(signal_list) # 计算产生总信号
         if signal_value > 0:
@@ -118,26 +118,28 @@ def Run(cci_n, dataset):
         else:
             signal = pre_pos
 
-        # ATR 止损
-        if signal == 1:
-            max_price = max(max_price, row[1].high)
-        else:
-            max_price = 0
+        # # ATR 止损
+        # if signal == 1:
+        #     max_price = max(max_price, row[1].high)
+        # else:
+        #     max_price = 0
+        #
+        # if close < (max_price - 2.2 * atr) and signal == 1:
+        #     signal = 0
+        # elif b_day != 0:
+        #     signal = 0
 
-        if close < (max_price - 2.2 * atr) and signal == 1:
-            signal = 0
-        elif b_day != 0:
-            signal = 0
-
-        # 百分比止损
-        stop_loss = 0.05
-        if signal == 1 and close < buy_price * (1 - stop_loss):
-            signal = 0
-        if pre_pos == 0 and signal == 1:
-            buy_price = pre_close
-        elif pre_pos == 1 and signal == 0:
-            buy_price = 0
-            b_day = 3
+        # # 百分比止损
+        # stop_loss = 0.05
+        # if signal == 1 and close < buy_price * (1 - stop_loss):
+        #     signal = 0
+        # if b_day != 0:
+        #     signal = 0
+        # if pre_pos == 0 and signal == 1:
+        #     buy_price = pre_close
+        # elif pre_pos == 1 and signal == 0:
+        #     buy_price = 0
+        #     b_day = 3
 
         ## 保留前一天close数据
         pre_close = close
@@ -155,13 +157,13 @@ def Run(cci_n, dataset):
     df_rt.index = [rt.datetime for rt in rt_list]
     df_rt['pnl_rate'] = [rt.pnl_rate for rt in rt_list]
     df_rt['cum_rate'] = round(df_rt['pnl_rate'].cumsum().astype(float) + 1,3)
+    df_rt['raw_cret'] = round(df['chg'].cumsum().astype(float) + 1, 3)
     max_draw_down = MaxDrawDown(df_rt['cum_rate'])
-    df_rt['cum_rate'].plot()
+    ax = df_rt[['cum_rate', 'raw_cret']].plot(title= sym )
+    fig = ax.get_figure()
+    fig.savefig(sym + '_cci.png')
     df_rt = df_rt.set_index('datetime')
-    # df = df.set_index('datetime')
-    # df_rt = pd.concat([df_rt, df], axis=1)
-    # df_rt.to_csv('test.csv')
-    # print(df_rt)
+
     return(df_rt.cum_rate.iloc[-1], max_draw_down,df_rt)
 
 
@@ -297,19 +299,26 @@ def ta_atr(n, k_data):
     return(atr.round(3))
 
 
-s_time = '2017-10-01'
-e_time = '2019-02-26'
+s_time = '2015-01-01'
+e_time = '2019-04-02'
 total_return = []
 return_m = []
 # symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-# symbol_list = ['SHSE.512880']
-symbol_list = ['SHSE.510050','SHSE.510500','SHSE.510880','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.518880'\
-    ,'SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
-    ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
-    ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
-    ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
-    ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833','SZSE.159901','SZSE.159915','SZSE.159919']
+# symbol_list = ['SZSE.002456']
+# symbol_list = ['SHSE.510050','SHSE.510500','SHSE.510880','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.518880'\
+#     ,'SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
+#     ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
+#     ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
+#     ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
+#     ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833','SZSE.159901','SZSE.159915','SZSE.159919']
+# symbol_list = ['SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
+#     ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
+#     ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
+#     ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
+#     ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833']
+symbol_list = ['SHSE.600271','SHSE.600346','SHSE.600438','SHS.600516','SHSE.600570','SHSE.600588','SHSE.600703','SHSE.600760','SHSE.600809','SHSE.600816','SHSE.600867','SHSE.600909','SHSE.601012','SHSE.601108','SHSE.601155','SHSE.601360','SHSE.601992','SHSE.603799','SHSE.603833','SHSE.603993','SZSE.000063','SZSE.000671','SZSE.000792','SZSE.000839','SZSE.000938','SZSE.002008','SZSE.002027','SZSE.002044','SZSE.002050','SZSE.002146','SZSE.002153','SZSE.002230','SZSE.002236','SZSE.002271','SZSE.002450','SZSE.002456','SZSE.002460','SZSE.002466','SZSE.002475','SZSE.002555','SZSE.002558','SZSE.002602','SZSE.002624','SZSE.002673','SZSE.002714','SZSE.002773','SZSE.002797','SZSE.300003','SZSE.300017','SZSE.300033','SZSE.300059','SZSE.300072','SZSE.300122','SZSE.300136','SZSE.300142','SZSE.300296','SZSE.300433']
+
 # start_list = []
 years = int(e_time[:4]) - int(s_time[:4]) + 1
 
@@ -332,9 +341,9 @@ for sym in symbol_list:
 #     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
 #     df_k = get_stk(sym, start_year, end_year)
 #     cci_n= [5, 13, 21]
-    df_k = get_k(sym, 60, 0, start_year, end_year)
-    cci_n= [15, 30, 60]
-    # cci_n= [20,40,80]
+    df_k = get_stk_1h(sym,start_year, end_year)
+    cci_n= [15,30,60]
+
 
     if len(df_k) == 0:
         continue
@@ -346,7 +355,7 @@ for sym in symbol_list:
     k_data = k_data.dropna()
     # DrawSignals(k_data)
 
-    re, mdd, df_r = Run(cci_n, k_data)
+    re, mdd, df_r = Run(sym,cci_n, k_data)
     # k_data = k_data.set_index('datetime')
     # k_data = pd.concat([k_data,df_r], axis=1)
     # k_data = k_data.reset_index('datetime')
@@ -354,9 +363,11 @@ for sym in symbol_list:
     # print([sym, start_year, end_year, re, mdd])
     # print(str(k_data.datetime.iloc[0]) + ' ~ ' + str(k_data.datetime.iloc[-1]))
     total_return.append([sym, start_year, end_year, re, mdd])
+    print(total_return[-1])
 
-ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
-print(ret)
+# ret = pd.DataFrame(total_return, columns=['symbol', 'start', 'end', 'return', 'mdd'])
+# print(ret)
+# ret.plot()
 
 # filename = dt.now().strftime('%Y%m%d_%H%M%S') + '.csv'
 # # t_r=pd.DataFrame(list(return_m))

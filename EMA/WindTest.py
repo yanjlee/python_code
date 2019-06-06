@@ -1,6 +1,11 @@
-
 from WindPy import *
 w.start()
 
-w_data = w.wsd("600129.SH", "close", "2018-08-15", "2018-09-14", "Fill=Previous")
-w_data_m = w.wsi("600016.SH", "open,high,low,close", "2018-09-14 09:00:00", "2018-09-14 18:42:53", "")
+symbol = '127008.SZ'
+start = '219-05-19'
+end = '2019-05-21'
+
+w_data = w.wsd(symbol, "close", start, end, "Fill=Previous")
+w_data_m = w.wsi(symbol, "open,high,low,close", start,end, "")
+print(w_data)
+print(w_data_m)

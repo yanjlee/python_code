@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from mpl_finance import candlestick_ohlc
 import pandas as pd
 import numpy as np
-from STK.tsdata import get_k_stk as get_k
+from STK.tsdata import get_k_stk as get_k, get_stk
 import statsmodels.api as sm # 最小二乘
 import copy
 #from statsmodels.stats.outliers_influence import summary_table # 获得汇总信息
@@ -36,7 +36,7 @@ def Run(dataset,S):
         return(mdd)
 
     # 获取数据, 创建DataFrame
-    df = dataset
+    df = dataset.set_index('datetime')
 
     # 定义账户类
     class ActStatus:
@@ -81,7 +81,7 @@ def Run(dataset,S):
     # pre_cci_list = list(df[cci_col].iloc[0])
 
     for i, row in enumerate(df.iterrows()):
-        datetime = row[1].datetime
+        datetime = row[0]
         close = row[1].close
         chg = row[1].chg
         atr = row[1].atr
@@ -124,9 +124,9 @@ def Run(dataset,S):
         # else:
         #     signal_cci = pre_pos
 
-        if zs_value > -S :
+        if zs_value > S:# and zs_value < S  :
             signal_rs = 1
-        elif zs_value < -S:
+        elif zs_value < -S:# or zs_value > S:
             signal_rs = 0
         else:
             signal_rs = pre_pos
@@ -176,13 +176,12 @@ def Run(dataset,S):
     df_rt.index = [rt.datetime for rt in rt_list]
     df_rt['pnl_rate'] = [rt.pnl_rate for rt in rt_list]
     df_rt['cum_rate'] = round(df_rt['pnl_rate'].cumsum().astype(float) + 1,3)
+    df_rt['raw_cret'] = round(df['chg'].cumsum().astype(float) + 1, 3)
     max_draw_down = MaxDrawDown(df_rt['cum_rate'])
-    df_rt['cum_rate'].plot()
+    ax = df_rt[['cum_rate', 'raw_cret']].plot(title= sym )
+    fig = ax.get_figure()
+    fig.savefig(sym + '_rsrs.png')
     df_rt = df_rt.set_index('datetime')
-    # df = df.set_index('datetime')
-    # df_rt = pd.concat([df_rt, df], axis=1)
-    # df_rt.to_csv('test.csv')
-    # print(df_rt)
     return(df_rt.cum_rate.iloc[-1], max_draw_down,df_rt)
 
 
@@ -342,13 +341,19 @@ def ols_rsrs(N,M,df):
 
 
 atr_n = 20
-s_time = '2014-10-01'
-e_time = '2016-02-26'
+s_time = '2015-01-01'
+e_time = '2019-03-21'
 total_return = []
 return_m = []
 # symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
-# symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
-symbol_list = ['SZSE.002456']
+# symbol_list = ['SHSE.510050','SHSE.510500','SHSE.510880','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.518880'\
+#     ,'SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
+#     ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
+#     ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
+#     ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
+#     ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833','SZSE.159901','SZSE.159915','SZSE.159919']
+symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
+# symbol_list = ['SZSE.159901']
 # start_list = []
 years = int(e_time[:4]) - int(s_time[:4]) + 1
 # for n in range(years):
@@ -368,8 +373,10 @@ end_year = e_time
 
 for sym in symbol_list:
 # 查询历史行情
-#     df_k = history(symbol=sym, frequency='1h', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close,volume',adjust=1, df=True)
-    df_data = get_k(sym, 60, 0, start_year, end_year)
+    df_data = history(symbol=sym, frequency='1d', start_time=start_year, end_time=end_year, fields='eob,open,high,low,close',adjust=1, df=True)
+    df_data.rename(columns={'eob':'datetime'}, inplace = True)
+    # df_data = get_stk(sym, start_year, end_year)
+    # df_data = get_k(sym, 60, 0, start_year, end_year)
     if len(df_data) == 0:
         continue
     df_data.loc[:,'atr'] = ta.ATR(df_data.high, df_data.low, df_data.close, timeperiod=atr_n)
@@ -392,18 +399,18 @@ for sym in symbol_list:
     df_rsrs = ols_rsrs(N,M,df_k[['high', 'low']])
     df_k = pd.concat([df_k,df_rsrs], axis=1)
     df_k = df_k.dropna()
-    DrawSignals(df_k)
-    # rsrs = ['zs']#,'zm','zmps']
-    # df_run = df_k[['datetime','open','high','low','close','atr','chg']]
-    # for rs in rsrs:
-    #     df_run.loc[:,'rs'] = df_k[rs]
 
-    # re, mdd, df_r = Run(df_k,S)
-    # total_return.append([sym,re,mdd])
+    rsrs = ['zs']#,'zm','zmps']
+    df_run = df_k[['datetime','open','high','low','close','atr','chg']]
+    for rs in rsrs:
+        df_run.loc[:,'rs'] = df_k[rs]
+
+    re, mdd, df_r = Run(df_k,S)
+    total_return.append([sym,re,mdd])
     # print(total_return[-1])
 #
-# ret = pd.DataFrame(total_return, columns=['symbol','N','rs_name', 'return', 'mdd'])
-# # print(ret)
+ret = pd.DataFrame(total_return, columns=['symbol', 'return', 'mdd'])
+print(ret)
 #
 # # filename = time.strftime('%Y%m%d_%H%M%S') + '.csv'
 # # t_r=pd.DataFrame(list(total_return))

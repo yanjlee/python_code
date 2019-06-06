@@ -106,9 +106,10 @@ def buy(symbol_list,user):
     p_data = get_price(b_list)
     p_data = dict(list(zip(list(p_data.symbol), list(p_data.bid_1))))
     money = get_money()
-    if money > 10000:
+    if money > 1000:
+        mon = 4500
         for symbol in b_list:
-            vol_data[symbol] = int(money/len(b_list)/100/p_data[symbol]) * 100
+            vol_data[symbol] = int(mon/len(b_list)/100/p_data[symbol]) * 100
         for k,v in p_data.items():
             print('Buy--' + k + ', price--' + str(v) + ', vol--' + str(vol_data[k]))
             user.buy(k,v,vol_data[k])
@@ -126,8 +127,8 @@ def sell(symbol_list,user):
         user.sell(k,p_data[k],v)
 
 
-def trade_exe(s_list, b_list, user):
-    # user = init()
+def trade_exe(s_list, b_list,):
+    user = init()
     if len(s_list) > 0:
         sell(s_list, user)
         time.sleep(15)

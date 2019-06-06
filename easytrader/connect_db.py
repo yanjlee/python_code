@@ -21,10 +21,17 @@ def fill_data(query_sql):
     try:
         cur.execute(query_sql)
     except Exception as e:
-        print(e)
-        print(query_sql)
+        print(e + ': ' + query_sql)
         # pass
     connClose(conn, cur)
+
+def fill_data_no_err(query_sql):
+        conn, cur = connDB()
+        try:
+            cur.execute(query_sql)
+        except Exception as e:
+            pass
+        connClose(conn, cur)
 
 
 def get_data(items, table, symbol, startDate, endDate):
@@ -35,8 +42,7 @@ def get_data(items, table, symbol, startDate, endDate):
         cur.execute(query_sql)
         db_data = cur.fetchall()
     except Exception as e:
-        print(e)
-        print(query_sql)
+        print(e + ': ' + query_sql)
     connClose(conn, cur)
     return (db_data)
 
@@ -48,7 +54,7 @@ def get_all_data(items, table, condition):
         cur.execute(query_sql)
         db_data = cur.fetchall()
     except Exception as e:
-        print(e)
+        print(e + ': ' + query_sql)
         db_data =[]
     connClose(conn, cur)
     return (db_data)

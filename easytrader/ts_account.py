@@ -3,7 +3,7 @@ import ht_trade as ht
 # import time
 from datetime import datetime as dt
 from connect_db import fill_data
-from ts_data import *
+from ts_data_0 import *
 from datetime import datetime as dt
 import time
 import os
@@ -114,13 +114,15 @@ def update_info():
 
 
 current_time = dt.now().strftime('%H:%M:%S')
-trade_list = ['SZSE.000333','SZSE.002456','SHSE.512880']
+trade_list = ['SHSE.512880']
 # htd.get_price(['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.603288'])
 try:
-    trade(trade_list, user)
     os.system("C:/codes/easytrader/Blackberry.m4a")
+    trade(trade_list)
+    os.system("C:/codes/easytrader/BusinessMsg.m4a")
     time.sleep(60)
 except Exception as e:
     print(e)
 
 update_info()
+os.system("C:/codes/easytrader/BlackberrySmile.m4a")

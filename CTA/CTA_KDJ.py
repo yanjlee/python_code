@@ -4,35 +4,16 @@
 # Version 1.0.0
 # -=-=-=-=-=-=-=-=-=-=-=
 
-# 结论：
-# N: 3, fk_period = 9, sk and sd = 3 参数最优，超过80或者低于20反转的信号不强。
-
-from datetime import timedelta, datetime
 import pandas as pd
-from ConnectDB import get_all_data
-import os
-import matplotlib.pyplot as plot
-from decimal import Decimal
 import numpy as np
-import scipy as sp
-from scipy.optimize import leastsq
-import numpy as np
-import talib as talib
+import talib as ta
+from ConnectDB import get_ft
 
 
-
-def KDJ(N,fk_period,sk_period,future):
+def Run(df):
     #实参数据定义##########################
-    FEE = 3
+    FEE = 2.5
     PRICE = 10
-
-    fk_period = fk_period
-    sk_period = sk_period
-
-    EndTime_1 = '14:55'
-    EndTime_2 = '23:00'
-
-
 
     def MaxDrawDown(return_list):
         max_value = 0
@@ -44,22 +25,6 @@ def KDJ(N,fk_period,sk_period,future):
             else:
                 mdd = 0
         return(mdd)
-
-    # 获取数据, 创建DataFrame
-    future_type = future
-    items = 'datetime, open, high, low, close'
-    table = 'fur_price_5m'
-    condition = 'where symbol = \'' + future_type + '\' and datetime >= \'2018-08-20\' order by datetime asc'
-    symbol_data = get_all_data(items, table, condition)
-    df_price = pd.DataFrame(list(symbol_data), columns=['datetime','open','high','low','close'])
-    df_price['chg'] = df_price['close'] -  df_price['close'].shift(1)
-    df_price = df_price.fillna(0)
-    df_price[['open','high','low','close']] = df_price[['open','high','low','close']].astype(float)
-    # matype: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3 (Default=SMA)
-    df_price['slow_k'], df_price['slow_d'] = talib.STOCH(df_price['high'].values,df_price['low'].values,df_price['close'].values,fastk_period=fk_period,slowk_period=sk_period,slowk_matype=1,slowd_period=sk_period,slowd_matype=1)
-    # df_price['J'] = df_price.slow_k * 3 - 2 * df_price.slow_d
-    df = df_price.dropna()
-
 
     # 定义账户类
     class ActStatus:
@@ -87,10 +52,6 @@ def KDJ(N,fk_period,sk_period,future):
 
 
     # 策略和类初始化数据
-    k_avg = np.zeros(N)
-    d_avg = np.zeros(N)
-    open = 0
-
     signal = 0
     pre_pos = 0
     rt_list = []
@@ -102,12 +63,7 @@ def KDJ(N,fk_period,sk_period,future):
         k = row[1][6]
         d = row[1][7]
 
-        k_avg[0:N-1] = k_avg[1:N]
-        d_avg[0:N - 1] = d_avg[1:N]
-        k_avg[-1] = k
-        d_avg[-1] = d
-
-        if i < N - 1: # 跳过无数据记录
+        if i < 1: # 跳过无数据记录
             continue
 
     ## 数据与信号驱动计算
@@ -117,67 +73,69 @@ def KDJ(N,fk_period,sk_period,future):
         pre_pos = rt.pos
 
     ## 策略信号
-        k_signal = k_avg.mean()
-        d_signal = d_avg.mean()
-
-        if k_signal > d_signal and d_signal > 50:
+        if k > d:# and pre_k < pre_d:
             signal = 1
-        elif k_signal < d_signal and d_signal < 50:
+        elif k < d:# and pre_k > pre_d:
             signal = -1
         else:
             signal = 0
 
-
-    ## 收市前清盘
-        if (row[1][0].strftime('%H:%M') >= EndTime_1 and row[1][0].strftime('%H:%M') <= '15:00') or row[1][0].strftime('%H:%M') >= EndTime_2:
-            signal = 0
-
     # 结果统计与展示
     df_rt = pd.DataFrame()
-    # df_rt['datetime'] = [rt.datetime for rt in rt_list]
-    # df_rt['close'] = [rt.close for rt in rt_list]
-    # df_rt['chg'] = [rt.chg for rt in rt_list]
-    # df_rt['pos'] = [rt.pos for rt in rt_list]
+    df_rt['datetime'] = [rt.datetime for rt in rt_list]
+    df_rt['close'] = [rt.close for rt in rt_list]
+    df_rt['chg'] = [rt.chg for rt in rt_list]
+    df_rt['pos'] = [rt.pos for rt in rt_list]
     # df_rt['pre_pos'] = [rt.pre_pos for rt in rt_list]
-    # df_rt['pnl'] = [rt.pnl for rt in rt_list]
-    # df_rt['fee'] = [rt.fee for rt in rt_list]
-    # df_rt.index = [rt.datetime for rt in rt_list]
+    df_rt['pnl'] = [rt.pnl for rt in rt_list]
+    df_rt['fee'] = [rt.fee for rt in rt_list]
+    df_rt.index = [rt.datetime for rt in rt_list]
     df_rt['net_pnl'] = [rt.net_pnl for rt in rt_list]
-    df_rt['cum_pnl'] = df_rt['net_pnl'].cumsum().astype(float)
-    max_draw_down = MaxDrawDown(df_rt['cum_pnl'])
-    df_rt['cum_pnl'].plot()
-    # print([df_rt['cum_pnl'][i-N-1], max_draw_down])
-
-    return(df_rt['cum_pnl'][i-N-1], max_draw_down)
-
+    df_rt['cum_rate'] = round(df_rt['net_pnl'].cumsum().astype(float) + 1, 2)
+    df_rt['raw_cret'] = round((df_rt['chg'] * PRICE).cumsum().astype(float) + 1, 2)
+    max_draw_down = MaxDrawDown(df_rt['cum_rate'])
+    df_rt.to_csv('test.csv')
+    return (df_rt.cum_rate.iloc[-1], max_draw_down, df_rt[['cum_rate', 'raw_cret']])
 
 
+def ta_kdj(data, fastk_period=9, slowk_period=3, slowd_period=3):
+    indicators={}
+    #计算kd指标
+    high_prices = np.array(data['high'])
+    low_prices = np.array(data['low'])
+    close_prices = np.array(data['close'])
+    indicators['k'], indicators['d'] = ta.STOCH(high_prices, low_prices, close_prices,fastk_period=fastk_period,\
+                                                slowk_period=slowk_period, slowk_matype = 1,\
+                                                slowd_period=slowd_period, slowd_matype = 1)
+    # matype: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3 (Default=SMA)
+    kdj = pd.DataFrame(indicators).round(2)
+    return kdj
+
+
+start_time = '2018-01-01'
+end_time = '2019-04-30'
 total_return = []
-future_list = ['TA1901','RU1901','M1901','J1901','J1905','RB1901','RB1905','RB1810','ZN1811','ZN1810','CU1811']
-# future_list = ['J1901']
-N = 3
-fk_period = 9
-sk_period = 3
-for future in future_list:
-    re, mdd = KDJ(N,fk_period,sk_period,future)
-    total_return.append([future,N,fk_period,sk_period,sk_period,re,mdd])
-    print(total_return[-1])
 
-# filename = datetime.now().strftime('%Y%m%d_%H%M%S') + '.csv'
-# t_r=pd.DataFrame(list(total_return))
-# t_r.to_csv(filename)
-# os.system('C:/codes/Blackberry.m4a')
+# future_list = ['PP0','TA0','V0','EG0','ZC0','SC0','L0','WH0','RI0','LR0','CY0','CF0','P0','RU0','BU0','PB0','CU0','AL0','ZN0','SN0','NI0','HC0','J0','JM0','FU0','CS0','C0','FG0','SR0','AG0','SF0','JR0','FB0','SP0','WR0','BB0','OI0','RS0','RM0','RB0','A0','B0','Y0','M0','MA0','I0','SM0','AP0','JD0','AU0']
+future_list = ['J0','RB0','I0','M0','TA0','NI0','AL0']
 
+for symbol in future_list:
+    df_data = get_ft(symbol, start_time, end_time)
+    if len(df_data) == 0:
+        continue
+    #     # df_data.loc[:,'atr'] = ta.ATR(df_data.high, df_data.low, df_data.close, timeperiod=atr_n)
+    df_data.loc[:, 'chg'] = df_data['close'] - df_data['close'].shift(1)
+    df_data = pd.concat([df_data, ta_kdj(df_data)], axis=1)
+    df_data = df_data.dropna()
+    re, mdd, df_k = Run(df_data)
+    total_return.append([symbol, re, mdd])
 
-# slow_k, slow_d = KDJ(fk_period,sk_period,sd_period,future)
-# print([future, N, K, re, mdd])
-
+    # df_data.loc[:, 'ma5'] = df_data.close.rolling(3, min_periods=0).mean()
+    # df_data.loc[:, 'ma34'] = df_data.close.rolling(13, min_periods=0).mean()
 
 
-# df_rt.to_csv('rt.csv')
-# df_price.to_csv('price.csv')
-
-
-## MaxDrawdown
-## SharpRatio
-## KDJ
+    # print(df_data)
+    ax = df_k.plot(title=symbol)
+    fig = ax.get_figure()
+    # fig.savefig(symbol + '_kdj' + '.png')
+    # plt.close(fig)

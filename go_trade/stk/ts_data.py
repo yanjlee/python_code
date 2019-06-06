@@ -6,6 +6,7 @@ import pandas as pd
 from connect_db import get_all_data, fill_data
 import talib as ta
 import ht_trade as ht
+import numpy as np
 
 
 set_token('73f0f9b75e0ffe88aa3f04caa8d0d9be22ceda2d')
@@ -104,10 +105,32 @@ def get_1m_data(symbol,time):
     df_1m.sort_values('datetime', inplace=True)
     return(df_1m)
 
+def ta_kdj(data, fastk_period=10, slowk_period=3, slowd_period=3):
+    indicators={}
+    #计算kd指标
+    high_prices = np.array(data['high'])
+    low_prices = np.array(data['low'])
+    close_prices = np.array(data['close'])
+    indicators['k'], indicators['d'] = ta.STOCH(high_prices, low_prices, close_prices,fastk_period=fastk_period,\
+                                                slowk_period=slowk_period, slowk_matype = 0,\
+                                                slowd_period=slowd_period, slowd_matype = 0)
+    # indicators['j'] = 3 * indicators['k'] - 2 * indicators['d']
+    # #调整J的值不超过100，不低于-100
+    # temp = []
+    # for i in indicators['j']:
+    #     if i > 100:
+    #         temp.append(100)
+    #     elif i < 0:
+    #         temp.append(0)
+    #     else:
+    #         temp.append(i)
+    # indicators['j'] = np.array(temp)
+    kdj = pd.DataFrame(indicators)
+    return kdj
 
 # CCI策略指标数据计算以及交易信号产生函数, 根据df中price, CCI(15,30,60)周期值)
 # 周期值, 并在2.2倍ATR止损和买入价回撤5%止损下, 每个K线的交易信号, 同时记录买入价和买入后最高价
-def calc_cci(df_1h):
+def calc_cci_kdj(df_1h):
     # 计算CCI、ATR指标
     cci_n = [15, 30, 60]
     cci_m = pd.DataFrame()
@@ -115,16 +138,18 @@ def calc_cci(df_1h):
         cci_m = pd.concat([cci_m, ta_cci(n, df_1h)], axis=1)
     k_data = pd.concat([df_1h, cci_m, ta_atr(30, df_1h)], axis=1)
     k_data['chg'] = (k_data['close'] - k_data['close'].shift(1)) / k_data['close'].shift(1)
+    k_data = pd.concat([k_data, ta_kdj(k_data)], axis=1)
     df = k_data.dropna()
 
     # 计算signal、buy_price, max_price
     signals = [0]
-    signal = signals[0]
     pre_pos = 0
     max_price_list = [0]
     max_price = 0
     buy_price_list = [0]
     buy_price = 0
+    pre_k = 50
+    pre_d = 50
 
     cci_col = []
     for c in cci_n:
@@ -136,6 +161,8 @@ def calc_cci(df_1h):
         cci_list = list(row[1][cci_col])
         atr = row[1].atr
         open = row[1].open
+        k = row[1].k
+        d = row[1].d
 
         if i < 1:  # 从第二条开始
             continue
@@ -147,9 +174,9 @@ def calc_cci(df_1h):
         for j in range(0, len(cci_n)):
             pre_cci = pre_cci_list[j]
             cci = cci_list[j]
-            ci = 400
+            ci = 101
             range_value = 50
-            for i in range(-ci, ci + 1, range_value):
+            for i in range(-ci, ci + 300, range_value):
                 if pre_cci < i and cci > i:
                     signal_list.append(1)
                 elif pre_cci > i and cci < i:
@@ -158,9 +185,9 @@ def calc_cci(df_1h):
                     signal_list.append(pre_pos)
 
         signal_value = sum(signal_list)  # 计算产生总信号
-        if signal_value > 0:
+        if signal_value > 0 or (k > d and pre_k < pre_d):
             signal = 1
-        elif signal_value < 0:
+        elif signal_value < 0 and (k < d and pre_k > pre_d):
             signal = 0
         else:
             signal = pre_pos
@@ -187,7 +214,7 @@ def calc_cci(df_1h):
         signals.append(signal)
         ## 保留前一天close数据
         if pre_pos == 0 and signal == 1:
-            buy_price = open
+            buy_price = pre_close
         elif pre_pos == 1 and signal == 0:
             buy_price = 0
         elif pre_pos == 0 and signal == 0:
@@ -195,6 +222,9 @@ def calc_cci(df_1h):
         buy_price_list.append(buy_price)
 
         pre_pos = signal
+        pre_close = close
+        pre_k = k
+        pre_d = d
         pre_cci_list = cci_list
 
     df_signal = pd.DataFrame({'signal': signals, 'buy_price': buy_price_list, 'max_price': max_price_list},
@@ -210,7 +240,7 @@ def update_calc_data(symbol_list):
         df_1h = get_1h_data(symbol) # 获取1h数据
         if len(df_1h) == 0:
             continue
-        ts_data = calc_cci(df_1h)  # 计算指标
+        ts_data = calc_cci_kdj(df_1h)  # 计算指标
         if len(ts_data) > 0:
             # last_dict = get_last('td_cci', ts_data)
             for i in range(0, len(ts_data)):
@@ -256,7 +286,7 @@ def calc_current_cci_signal(signal_data):
         df_m2h = [df_1m.symbol[0],df_1m['datetime'].iloc[-1],df_1m.open[0],max(df_1m.high),min(df_1m.low),df_1m.close.iloc[-1]]
         df_1h.loc[-1] = df_m2h
         df_1h = df_1h.reset_index()
-        df_data = calc_cci(df_1h)
+        df_data = calc_cci_kdj(df_1h)
         signal_data = signal_data.append(df_data[['symbol','datetime','signal','buy_price','max_price']].iloc[-1])
 
     signal_data = signal_data.reset_index()
@@ -294,11 +324,11 @@ def trade(symbol_list):
 
 
 # symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600508','SHSE.600660','SHSE.603288','SHSE.603288']
-# symbol_list = ['SHSE.600585']
-# start = '2018-09-01 08:54:00'
-# end = '2018-12-20 15:04:01'
-# # frequency = '60s'
-# # table = 'ts_price_1m'
+symbol_list = ['SHSE.600585']
+start = '2019-04-01 08:54:00'
+end = '2019-04-26 15:04:01'
+frequency = '60s'
+table = 'ts_price_1m'
 # frequency = '3600s'
 # table = 'ts_price_1h'
 # update_gm_history(frequency,table,symbol_list,start,end)

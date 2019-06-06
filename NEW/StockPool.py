@@ -14,12 +14,12 @@ import pandas as pd
 
 #############################
 # 常量设置
-PE = 20 # 最大PE
+PE = 25 # 最大PE
 PB = 5 # 最大PB
 ROE = 15 # 最小ROE
 DIVIDEND_RATE = 1.5 # 最小股息率
 MKT_CAP = 5000000000 # 最小市值
-TOP_STOCK_NUMBER = 5
+TOP_STOCK_NUMBER = 100
 
 # requestDate = '2018-12-26'
 #############################
@@ -28,7 +28,7 @@ def get_stock_list(requestDate):
     # 1. 过滤东三省和黑名单b_list公司，获取获取symbol和IPO日期
     items = 'symbol, ipo'
     table = 'stk_info'
-    condition = ' where area not in (\'黑龙江\',\'吉林\',\'辽宁\') and symbol not in (select symbol from data.b_list)'
+    condition = ' where area not in (\'黑龙江\',\'吉林\',\'辽宁\') and symbol not in (select symbol from data.b_list) and symbol in (select symbol from data.idx_meb)'
     ipo_data = get_all_data(items, table, condition)
 
     divSet= []
@@ -59,7 +59,9 @@ def get_stock_list(requestDate):
     # 5. 股息收益率要大于5年国债收益率
     items = 'a.symbol'
     table = 'stk_fina_calc'
-    condition = ' a inner join (SELECT symbol, max(date) as date FROM data.stk_fina_calc where rpt_date <= \'' + requestDate + '\' and symbol in ' + divSet2 + ' group by symbol) b on a.symbol =b.symbol and a.date = b.date where a.div_yield > ' + str(DIVIDEND_RATE) + 'order by a.symbol'
+    condition = ' a inner join (SELECT symbol, max(date) as date FROM data.stk_fina_calc' \
+                ' where rpt_date <= \'' + requestDate + '\' and symbol in ' + divSet2 + \
+                ' group by symbol) b on a.symbol =b.symbol and a.date = b.date where a.div_yield > ' + str(DIVIDEND_RATE) + ' order by a.symbol'
     div_yield_data = get_all_data(items, table, condition)
     divSet3 = str(div_yield_data).replace(',), (',',').replace('((','(').replace(',))',')')
 
@@ -195,7 +197,7 @@ def get_info(divSet7):
     df =df.set_index('symbol')
     return (df)
 
-order, divSet7, df = get_stock_list('2019-03-08')
+order, divSet7, df = get_stock_list('2019-04-25')
 
 df_info = get_info(divSet7)
 df = pd.merge(df,df_info,left_index=True,right_index=True)

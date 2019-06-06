@@ -4,6 +4,7 @@
 # Version 1.0.0
 # -=-=-=-=-=-=-=-=-=-=-=
 import pymysql
+import pandas as pd
 
 
 def connDB():  # 连接数据库函数
@@ -71,3 +72,14 @@ def get_all_data(items, table, condition):
 
     connClose(conn, cur)
     return (db_data)
+
+def get_ft(symbol, start_time, end_time):
+    items = 'datetime, open, high, low, close'
+    table = ' fur_price_5m'
+    condition = 'where symbol = \'' + symbol + '\' and datetime >= \'' + start_time + '\' and datetime <= \'' + end_time + '\'  order by datetime asc'
+    symbol_data = get_all_data(items, table, condition)
+    k_data = pd.DataFrame(list(symbol_data), columns=['datetime', 'open', 'high', 'low', 'close'])
+    k_data.set_index(["datetime"], inplace=True)
+    k_data = k_data.astype('float64').round(2)
+    k_data = k_data.reset_index(["datetime"])
+    return k_data

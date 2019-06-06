@@ -228,19 +228,19 @@ def ols_rsrs(N,M,df):
 # N = 32
 # S = 0.0
 # atr_n = 20
-s_time = '2017-01-01'
+s_time = '2018-01-01'
 e_time = '2019-02-26'
 total_return = []
 return_m = []
 symbol_idx = 'SHSE.000300'
-# symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
+symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260',
-symbol_list = ['SHSE.510050','SHSE.510500','SHSE.510880','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.518880'\
-    ,'SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
-    ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
-    ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
-    ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
-    ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833','SZSE.159901','SZSE.159915','SZSE.159919']
+# symbol_list = ['SHSE.510050','SHSE.510500','SHSE.510880','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.518880'\
+#     ,'SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
+#     ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
+#     ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
+#     ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
+#     ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833','SZSE.159901','SZSE.159915','SZSE.159919']
 # symbol_list = ['SZSE.002456','SZSE.000333']
 # start_list = []
 years = int(e_time[:4]) - int(s_time[:4]) + 1
@@ -265,8 +265,9 @@ df_idx = pd.DataFrame(list(index_data),columns=['datetime']).set_index('datetime
 df_return = copy.copy(df_idx)
 
 # s_list = np.arange(0,1.00,0.1)
-S = 0
-for N in range(5,32):
+S = 0.5
+
+for N in [20]:
     df_i = copy.copy(df_idx)
     df_ret = copy.copy(df_return)
     for sym in symbol_list:
@@ -314,13 +315,13 @@ for N in range(5,32):
         # DrawSignals(df_data)
 
 
-    for S in s_list:
-        re, mdd, df_r = Run(df_i,df_ret,S)
-        total_return.append([N,S,re,mdd])
-# print('TotalReturn: '+ str(re) + ' MaxDrawDown: ' + str(mdd))
-print(total_return)
-ret = pd.DataFrame(total_return, columns=['N','S', 'return', 'mdd'])
-# # # print(ret)
 
-filename = time.strftime('%Y%m%d_%H%M%S') + '.csv'
-ret.to_csv(filename)
+#     re, mdd, df_r = Run(df_i,df_ret,S)
+#     total_return.append([N,S,re,mdd])
+# # print('TotalReturn: '+ str(re) + ' MaxDrawDown: ' + str(mdd))
+# print(total_return)
+# ret = pd.DataFrame(total_return, columns=['N','S', 'return', 'mdd'])
+# # # # print(ret)
+#
+# filename = time.strftime('%Y%m%d_%H%M%S') + '.csv'
+# ret.to_csv(filename)

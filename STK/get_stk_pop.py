@@ -44,10 +44,10 @@ def Run(dataset,df_return,S):
     return_list= [0]
 
     for i, row in enumerate(df.iterrows()):
-        if df.iloc[i].max(axis=None, skipna=True) > S:
-            stk_list.append(df.iloc[i].idxmax(axis=None, skipna=True))
-        else:
-            stk_list.append('')
+        # if df.iloc[i].min(axis=None, skipna=True) > S:
+        stk_list.append(df.iloc[i].idxmax(axis=None, skipna=True))
+        # else:
+        #     stk_list.append('')
 
         if i < 1:  # 从第二条开始
             continue
@@ -63,6 +63,8 @@ def Run(dataset,df_return,S):
         else:
             cumulative_return.append(cumulative_return[-1])
             return_list.append(0)
+
+
 
     stk_list.pop()
 
@@ -228,7 +230,7 @@ def ols_rsrs(N,M,df):
 # N = 32
 # S = 0.0
 # atr_n = 20
-s_time = '2018-10-01'
+s_time = '2017-10-01'
 e_time = '2019-02-28'
 total_return = []
 return_m = []
@@ -236,9 +238,12 @@ symbol_idx = 'SHSE.000300'
 symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288']
 # symbol_list = ['SHSE.510880','SZSE.159901','SZSE.159915','SHSE.518880','SZSE.159919','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.510050','SHSE.510500']
 # symbol_list = ['SZSE.002456','SZSE.000333']
-# symbol_list = ['SZSE.000002','SZSE.000333','SZSE.002456','SHSE.601318','SHSE.600585','SHSE.600660','SHSE.603288', \
-#                'SHSE.510880', 'SZSE.159901', 'SZSE.159915', 'SHSE.518880', 'SZSE.159919', 'SHSE.510900', 'SHSE.511260',
-#                'SHSE.513500', 'SHSE.510050', 'SHSE.510500']
+symbol_list = ['SHSE.510050','SHSE.510500','SHSE.510880','SHSE.510900','SHSE.511260','SHSE.513500','SHSE.518880'\
+    ,'SHSE.600036','SHSE.600066','SHSE.600104','SHSE.600273','SHSE.600340','SHSE.600388','SHSE.600398','SHSE.600585'\
+    ,'SHSE.600612','SHSE.600660','SHSE.600690','SHSE.600741','SHSE.600987','SHSE.601009','SHSE.601318','SHSE.603288'\
+    ,'SHSE.603898','SZSE.000002','SZSE.000333','SZSE.000423','SZSE.000651','SZSE.000848','SZSE.000887','SZSE.002081'\
+    ,'SZSE.002085','SZSE.002142','SZSE.002146','SZSE.002236','SZSE.002275','SZSE.002285','SZSE.002294','SZSE.002456'\
+    ,'SZSE.002508','SZSE.002555','SZSE.002572','SZSE.002833','SZSE.159901','SZSE.159915','SZSE.159919']
 # start_list = []
 years = int(e_time[:4]) - int(s_time[:4]) + 1
 # for n in range(years):
@@ -260,7 +265,7 @@ end_year = e_time
 index_data  = get_data('date', 'idx_price', '\'000300.SH\'', start_year, end_year)
 df_idx = pd.DataFrame(list(index_data),columns=['datetime']).set_index('datetime')
 df_return = copy.copy(df_idx)
-S = 0
+S = 0.
 N = 20
 for sym in symbol_list:
     sym = sym.replace('SHSE.','').replace('SZSE.','')

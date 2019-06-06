@@ -28,39 +28,41 @@ def update_stk_adj_factor():
         except Exception as e:
             print(e)
 
-    items = 'symbol, max(date)'
-    tables = 'stk_adj_factor'
-    condition = ' group by symbol order by symbol'
-    data_info = get_all_data(items, tables, condition)
-    stk_data = dict(data_info)
-    end_date = datetime.now().date().strftime('%Y%m%d')
+## gm报错，bug等修复后再使用，get_history_instruments(symbols=[sym], fields='symbol,trade_date,adj_factor', start_date=start_date,end_date=end_date, df=True)
 
-    for j in stk_data:
-        start_date = (stk_data[j] + timedelta(1)).strftime('%Y%m%d')
-        if start_date > end_date:
-            continue
-        if j.startswith('6'):
-            sym = 'SHSE.' + j.replace('.SH', '')
-        else:
-            sym = 'SZSE.' + j.replace('.SZ', '')
-        gm_data = get_history_instruments(symbols=[sym], fields='symbol,trade_date,adj_factor', start_date=start_date,end_date=end_date, df=True)
-        if len(gm_data)  == 0:
-            continue
-        for k in range(0, len(gm_data)):
-            insert_gm = 'insert into data.stk_adj_factor values(\'' + j + '\',\'' + gm_data['trade_date'][k].strftime('%Y-%m-%d') + '\',' + str(round(gm_data['adj_factor'][k], 6)) + ');'
-            try:
-                fill_data(insert_gm)
-            except Exception as e:
-                print(e)
-        # df = pro.adj_factor(ts_code=i, start_date=start_date, end_date=end_date)  # trade_date='2018-08-10')
-        # for s in range(0, len(df)):
-        #     insert_sql = 'insert into data.stk_adj_factor values(' + str(list(df.iloc[s])).replace('[','').replace(']','') + ');'
-        #     # print(insert_sql)
-        #     try:
-        #         fill_data(insert_sql)
-        #     except Exception as e:
-        #         print(e)
-        print(j + ' is inserted in stk_adj_factor. ')
+    # items = 'symbol, max(date)'
+    # tables = 'stk_adj_factor'
+    # condition = ' group by symbol order by symbol'
+    # data_info = get_all_data(items, tables, condition)
+    # stk_data = dict(data_info)
+    # end_date = datetime.now().date().strftime('%Y%m%d')
+    #
+    # for j in stk_data:
+    #     start_date = (stk_data[j] + timedelta(1)).strftime('%Y%m%d')
+    #     if start_date > end_date:
+    #         continue
+    #     if j.startswith('6'):
+    #         sym = 'SHSE.' + j.replace('.SH', '')
+    #     else:
+    #         sym = 'SZSE.' + j.replace('.SZ', '')
+    #     gm_data = get_history_instruments(symbols=[sym], fields='symbol,trade_date,adj_factor', start_date=start_date,end_date=end_date, df=True)
+    #     if len(gm_data)  == 0:
+    #         continue
+    #     for k in range(0, len(gm_data)):
+    #         insert_gm = 'insert into data.stk_adj_factor values(\'' + j + '\',\'' + gm_data['trade_date'][k].strftime('%Y-%m-%d') + '\',' + str(round(gm_data['adj_factor'][k], 6)) + ');'
+    #         try:
+    #             fill_data(insert_gm)
+    #         except Exception as e:
+    #             print(e)
+    #     # df = pro.adj_factor(ts_code=i, start_date=start_date, end_date=end_date)  # trade_date='2018-08-10')
+    #     # for s in range(0, len(df)):
+    #     #     insert_sql = 'insert into data.stk_adj_factor values(' + str(list(df.iloc[s])).replace('[','').replace(']','') + ');'
+    #     #     # print(insert_sql)
+    #     #     try:
+    #     #         fill_data(insert_sql)
+    #     #     except Exception as e:
+    #     #         print(e)
+    #     print(j + ' is inserted in stk_adj_factor. ')
 
 def update_stk_PEPB():
     end_date = datetime.now().date().strftime('%Y-%m-%d')

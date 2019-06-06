@@ -96,13 +96,42 @@ def get_stk(symbol, start_time, end_time):
     k_data = k_data.reset_index(["datetime"])
     return (k_data)
 
+def get_cb(symbol,types = '5'):
+    items = 'datetime, open, high, low, close'#, volume'
+    table = ' cb_price'
+    condition = 'where symbol = \'' + symbol + '\' and type = \'' + types +  '\' order by datetime asc'
+    symbol_data = get_all_data(items, table, condition)
+    k_data = pd.DataFrame(list(symbol_data), columns=['datetime', 'open', 'high', 'low', 'close'])#, 'volume'])
+    k_data.set_index(["datetime"], inplace=True)
+    k_data = k_data.astype('float64')
+    k_data = k_data.reset_index(["datetime"])
+    return (k_data)
+
+def get_stk_1h(symbol, start_time, end_time):
+    items = 'dtime as date, open, high, low, close, volume'
+    table = ' td_price_1h'
+    condition = 'where symbol = \'' + symbol + '\' and dtime >= \'' + start_time + '\' and dtime <= \'' + end_time + '\'  order by dtime asc'
+    symbol_data = get_all_data(items, table, condition)
+    k_data = pd.DataFrame(list(symbol_data), columns=['datetime', 'open', 'high', 'low', 'close','volume'])
+    k_data.set_index(["datetime"], inplace=True)
+    k_data = k_data.astype('float64')
+    k_data = k_data.reset_index(["datetime"])
+    return (k_data)
+
 # n = 60
 # k = 0
-# symbol = 'SHSE.601318'
+# symbol = 'J0'
 # start_time = '2018-01-01'
 # end_time = '2018-12-31'
+
+
 # df_k = get_stk(symbol, start_time, end_time)
 # print(df_k)
 #
 # df =  get_k_stk(symbol, 60,0 , start_time, end_time)
+# print(df)
+
+# symbol = '127008'
+# type = '5'
+# df = get_cb(symbol,type)
 # print(df)
